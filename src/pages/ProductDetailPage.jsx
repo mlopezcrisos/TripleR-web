@@ -9,7 +9,7 @@ function ProductDetailPage({ products, addToCart }) {
   }
 
   return (
-    <div style={{ padding: '2rem', textAlign: 'center' }}>
+    <div style={{ padding: '2rem', textAlign: 'center', minHeight: '110vh' }}>
       <h1>{product.nombre}</h1>
       <img src={product.imagen} alt={product.nombre} style={{ maxWidth: '400px', borderRadius: '8px' }} />
       <p style={{ fontSize: '1.2rem' }}>{product.descripcion}</p>
