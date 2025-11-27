@@ -13,9 +13,9 @@ function Navbar({ cart }) {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 50) {
+      if (window.scrollY > 100) {
         setIsScrolled(true);
-      } else {
+      } else if (window.scrollY < 50) {
         setIsScrolled(false);
       }
     };
