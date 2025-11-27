@@ -1,0 +1,37 @@
+:root {
+  --azul-principal: #1E3A8A;
+  --amarillo-acento: #FBBF24;
+  --rojo-acento: #DC2626;
+  --crema-fondo: #FEF3C7;
+  --negro-texto: #171717;
+}
+
+body {
+  margin: 0;
+  font-family: 'Lilita One', sans-serif;
+  background-color: var(--azul-principal);
+  color: var(--crema-fondo);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* En: src/index.css */
+
+.product-grid {
+  display: grid;
+  /* Crea columnas que se adaptan, de mínimo 300px de ancho */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  /* El espacio entre los productos */
+  padding: 2rem;
+  justify-items: center;
+  /* Centra los items en la cuadrícula */
+}
+
+@media (max-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+  }
+}

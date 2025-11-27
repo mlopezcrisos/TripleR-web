@@ -1,0 +1,42 @@
+/* En: src/components/ProductCard.css */
+
+.card-link {
+  text-decoration: none;
+  color: var(--crema-fondo);
+}
+
+.card {
+  width: 100%;
+  max-width: 300px;
+  /* Limitamos el ancho máximo */
+  text-align: left;
+  margin: 0 auto;
+  /* Centramos la tarjeta si es más pequeña que el contenedor */
+}
+
+.card img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  display: block;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+}
+
+.card h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.3rem;
+  text-transform: uppercase;
+}
+
+.card .price {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--amarillo-acento);
+  font-weight: bold;
+}
+
+/* Ocultamos el botón para un look más limpio */
+.card button {
+  display: none;
+}
