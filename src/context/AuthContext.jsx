@@ -1,11 +1,12 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from '../firebase/config';
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signOut,
-    onAuthStateChanged
+    onAuthStateChanged,
+    signInWithPopup
 } from 'firebase/auth';
+import { auth, googleProvider } from '../firebase/config';
 
 const AuthContext = createContext();
 
@@ -25,12 +26,18 @@ export function AuthProvider({ children }) {
         return signInWithEmailAndPassword(auth, email, password);
     }
 
+    function loginWithGoogle() {
+        return signInWithPopup(auth, googleProvider);
+    }
+
     function logout() {
         return signOut(auth);
     }
 
     useEffect(() => {
+        console.log("AuthContext: Setting up auth listener");
         const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+            console.log("AuthContext: Auth state changed", currentUser);
             setUser(currentUser);
             setLoading(false);
         });
@@ -42,12 +49,17 @@ export function AuthProvider({ children }) {
         user,
         signup,
         login,
+        loginWithGoogle,
         logout
     };
 
+    if (loading) {
+        return <div style={{ color: 'white', textAlign: 'center', marginTop: '20px' }}>Cargando autenticación...</div>;
+    }
+
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
 }
