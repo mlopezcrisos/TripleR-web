@@ -1,8 +1,13 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function CartPage({ cart, removeFromCart }) {
+    const navigate = useNavigate();
     const total = cart.reduce((sum, item) => sum + item.precio * item.quantity, 0);
+
+    const handleCheckout = () => {
+        navigate('/checkout');
+    };
 
     return (
         <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', minHeight: '60vh' }}>
@@ -52,18 +57,20 @@ function CartPage({ cart, removeFromCart }) {
 
                     <div style={{ marginTop: '2rem', textAlign: 'right', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
                         <h2 style={{ color: 'var(--amarillo-acento)' }}>Total: ${total}</h2>
-                        <button style={{
-                            backgroundColor: 'var(--amarillo-acento)',
-                            color: 'var(--negro-texto)',
-                            border: 'none',
-                            padding: '1rem 2rem',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '1.2rem',
-                            fontFamily: "'Lilita One', sans-serif",
-                            textTransform: 'uppercase',
-                            marginTop: '1rem'
-                        }}>
+                        <button
+                            onClick={handleCheckout}
+                            style={{
+                                backgroundColor: 'var(--amarillo-acento)',
+                                color: 'var(--negro-texto)',
+                                border: 'none',
+                                padding: '1rem 2rem',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '1.2rem',
+                                fontFamily: "'Lilita One', sans-serif",
+                                textTransform: 'uppercase',
+                                marginTop: '1rem'
+                            }}>
                             Proceder al Pago
                         </button>
                     </div>

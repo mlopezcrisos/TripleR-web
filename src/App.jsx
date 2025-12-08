@@ -1,6 +1,6 @@
 // En: src/App.jsx
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
@@ -28,6 +28,12 @@ import Footer from './components/Footer';
 import ArtistPage from './pages/ArtistPage';
 import SearchPage from './pages/SearchPage';
 import CartPage from './pages/CartPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import CheckoutPage from './pages/CheckoutPage';
+import { useAuth } from './context/AuthContext';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from './firebase/config';
 
 function App() {
   const products = [
@@ -50,7 +56,34 @@ function App() {
 
   ];
 
-  const [cart, setCart] = useState([]);
+  const { user } = useAuth();
+  const [cart, setCart] = useState(() => {
+    const savedCart = localStorage.getItem('cart');
+    return savedCart ? JSON.parse(savedCart) : [];
+  });
+
+  // Sync cart with Firestore when user logs in
+  useEffect(() => {
+    if (user) {
+      const docRef = doc(db, "carts", user.uid);
+      const unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setCart(docSnap.data().items || []);
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [user]);
+
+  // Save cart to localStorage (always) and Firestore (if logged in)
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
+
+    if (user) {
+      const docRef = doc(db, "carts", user.uid);
+      setDoc(docRef, { items: cart }, { merge: true });
+    }
+  }, [cart, user]);
 
   const addToCart = (product) => {
     setCart(prevCart => {
@@ -79,6 +112,9 @@ function App() {
         <Route path="/search" element={<SearchPage products={products} />} />
         <Route path="/nosotros" element={<NosotrosPage />} />
         <Route path="/cart" element={<CartPage cart={cart} removeFromCart={removeFromCart} />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/checkout" element={<CheckoutPage cart={cart} />} />
       </Routes>
       <Footer />
     </div>
