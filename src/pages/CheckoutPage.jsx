@@ -3,6 +3,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import './CheckoutPage.css';
 
 // Replace with your actual Stripe Publishable Key
 const stripePromise = loadStripe("pk_test_51Mz...");
@@ -105,22 +106,22 @@ function CheckoutPage({ cart }) {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
                 {/* Shipping Address Section */}
-                <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '2rem', borderRadius: '16px' }}>
+                <div style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '2rem', borderRadius: '16px' }}>
                     <h2 style={{ color: 'white', marginBottom: '1.5rem' }}>Dirección de Envío</h2>
                     <form style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <input type="text" placeholder="Nombre completo" style={inputStyle} required />
-                        <input type="text" placeholder="Calle y número" style={inputStyle} required />
+                        <input type="text" placeholder="Nombre completo" style={inputStyle} className="checkout-input" required />
+                        <input type="text" placeholder="Calle y número" style={inputStyle} className="checkout-input" required />
                         <div style={{ display: 'flex', gap: '1rem' }}>
-                            <input type="text" placeholder="Ciudad" style={inputStyle} required />
-                            <input type="text" placeholder="Código Postal" style={inputStyle} required />
+                            <input type="text" placeholder="Ciudad" style={inputStyle} className="checkout-input" required />
+                            <input type="text" placeholder="Código Postal" style={inputStyle} className="checkout-input" required />
                         </div>
-                        <input type="text" placeholder="Estado" style={inputStyle} required />
-                        <input type="tel" placeholder="Teléfono" style={inputStyle} required />
+                        <input type="text" placeholder="Estado" style={inputStyle} className="checkout-input" required />
+                        <input type="tel" placeholder="Teléfono" style={inputStyle} className="checkout-input" required />
                     </form>
                 </div>
 
                 {/* Payment Section */}
-                <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '2rem', borderRadius: '16px' }}>
+                <div style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: '2rem', borderRadius: '16px' }}>
                     <h2 style={{ color: 'white', marginBottom: '1.5rem' }}>Pago</h2>
                     <div style={{ marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: '#9ca3af', marginBottom: '0.5rem' }}>
@@ -172,8 +173,8 @@ function CheckoutPage({ cart }) {
 const inputStyle = {
     padding: '0.75rem',
     borderRadius: '8px',
-    border: '1px solid rgba(255,255,255,0.2)',
-    backgroundColor: 'rgba(0,0,0,0.2)',
+    border: '1px solid white',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     color: 'white',
     width: '100%',
     boxSizing: 'border-box'

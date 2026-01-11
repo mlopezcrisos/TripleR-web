@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+import './LoginPage.css';
 
 function LoginPage() {
     const [email, setEmail] = useState('');
@@ -39,7 +40,7 @@ function LoginPage() {
             padding: '2rem'
         }}>
             <div style={{
-                backgroundColor: 'rgba(255,255,255,0.05)',
+                backgroundColor: 'rgba(255,255,255,0.2)',
                 padding: '3rem',
                 borderRadius: '16px',
                 width: '100%',
@@ -61,10 +62,11 @@ function LoginPage() {
                         placeholder="Correo electrónico"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        className="login-input"
                         style={{
                             padding: '1rem',
                             borderRadius: '8px',
-                            border: 'none',
+                            border: '1px solid white',
                             backgroundColor: 'rgba(255,255,255,0.1)',
                             color: 'white',
                             fontSize: '1rem'
@@ -76,10 +78,11 @@ function LoginPage() {
                         placeholder="Contraseña"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        className="login-input"
                         style={{
                             padding: '1rem',
                             borderRadius: '8px',
-                            border: 'none',
+                            border: '1px solid white',
                             backgroundColor: 'rgba(255,255,255,0.1)',
                             color: 'white',
                             fontSize: '1rem'
