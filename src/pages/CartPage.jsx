@@ -37,10 +37,16 @@ function CartPage({ cart, removeFromCart }) {
                                     <div>
                                         <h3 style={{ margin: '0', fontSize: '1rem' }}>{item.nombre}</h3>
                                         <p style={{ margin: '0', color: 'var(--amarillo-acento)' }}>${item.precio} x {item.quantity}</p>
+                                        {item.selectedSize && (
+                                            <p style={{ margin: '0', fontSize: '0.8rem', color: '#ccc' }}>Talla: {item.selectedSize}</p>
+                                        )}
+                                        {item.selectedCut && item.selectedCut !== 'regular' && (
+                                            <p style={{ margin: '0', fontSize: '0.8rem', color: '#ccc' }}>Corte: {item.selectedCut}</p>
+                                        )}
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => removeFromCart(item.id)}
+                                    onClick={() => removeFromCart(item.cartItemId || item.id)}
                                     style={{
                                         background: 'none',
                                         border: 'none',

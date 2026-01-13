@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 
-function SearchPage({ products }) {
+function SearchPage({ products, addToCart }) {
     const [searchParams] = useSearchParams();
     const query = searchParams.get('q') || '';
 
@@ -27,10 +27,8 @@ function SearchPage({ products }) {
                     {filteredProducts.map(product => (
                         <ProductCard
                             key={product.id}
-                            id={product.id}
-                            nombre={product.nombre}
-                            precio={product.precio}
-                            imagen={product.imagen}
+                            product={product}
+                            addToCart={addToCart}
                         />
                     ))}
                 </main>

@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 
-function ArtistPage({ products }) {
+function ArtistPage({ products, addToCart }) {
     const { artistId } = useParams();
 
     // Filter products by the artistId from the URL
@@ -31,10 +31,8 @@ function ArtistPage({ products }) {
                     {artistProducts.map(product => (
                         <ProductCard
                             key={product.id}
-                            id={product.id}
-                            nombre={product.nombre}
-                            precio={product.precio}
-                            imagen={product.imagen}
+                            product={product}
+                            addToCart={addToCart}
                         />
                     ))}
                 </main>

@@ -87,19 +87,26 @@ function App() {
 
   const addToCart = (product) => {
     setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === product.id);
+      // Create a unique ID for the cart item based on product ID and selected options
+      const cartItemId = `${product.id}-${product.selectedSize || 'default'}-${product.selectedCut || 'default'}`;
+
+      const existingItem = prevCart.find(item => item.cartItemId === cartItemId);
+
       if (existingItem) {
         return prevCart.map(item =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.cartItemId === cartItemId ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prevCart, { ...product, quantity: 1 }];
+
+      // If it's a new item configuration, add it with the unique cartItemId
+      // Note: We already receive 'price' calculated from the detail page, but we should ensure it persists
+      return [...prevCart, { ...product, cartItemId, quantity: 1 }];
     });
     alert("¡Producto agregado al carrito!");
   };
 
-  const removeFromCart = (productId) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== productId));
+  const removeFromCart = (cartItemId) => {
+    setCart(prevCart => prevCart.filter(item => item.cartItemId !== cartItemId));
   };
 
   return (
@@ -108,8 +115,8 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage artists={artists} />} />
         <Route path="/product/:productId" element={<ProductDetailPage products={products} addToCart={addToCart} />} />
-        <Route path="/artist/:artistId" element={<ArtistPage products={products} />} />
-        <Route path="/search" element={<SearchPage products={products} />} />
+        <Route path="/artist/:artistId" element={<ArtistPage products={products} addToCart={addToCart} />} />
+        <Route path="/search" element={<SearchPage products={products} addToCart={addToCart} />} />
         <Route path="/nosotros" element={<NosotrosPage />} />
         <Route path="/cart" element={<CartPage cart={cart} removeFromCart={removeFromCart} />} />
         <Route path="/login" element={<LoginPage />} />
