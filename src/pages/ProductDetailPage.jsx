@@ -1,8 +1,9 @@
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
 import './ProductDetailPage.css';
+import { sizesOf, stockOf, priceFor, ONE_SIZE } from '../data/catalogSeed';
 
-function ProductDetailPage({ products, addToCart }) {
+function ProductDetailPage({ products, loading, cart = [], addToCart }) {
   const { productId } = useParams();
   const product = products.find(p => p.id == productId);
 
@@ -11,38 +12,60 @@ function ProductDetailPage({ products, addToCart }) {
   const [quantity, setQuantity] = useState(1);
 
   if (!product) {
-    return <h2>Producto no encontrado</h2>;
+    return <h2>{loading ? 'Cargando...' : 'Producto no encontrado'}</h2>;
   }
 
-  // Opciones de corte. `price` es el precio final con esa opción
-  // (sin `price` se usa el precio base del producto).
+  const sizes = sizesOf(product);
+  const isOneSize = sizes.length === 1 && sizes[0] === ONE_SIZE;
+  const size = isOneSize ? ONE_SIZE : selectedSize;
+  const isShirt = (product.tipo || 'playera') === 'playera';
+
+  // Piezas de esta talla que ya están en el carrito (en cualquier corte).
+  const inCart = s => cart
+    .filter(item => item.id == product.id && (item.selectedSize || ONE_SIZE) === s)
+    .reduce((sum, item) => sum + item.quantity, 0);
+  const available = s => Math.max(0, stockOf(product, s) - inCart(s));
+  const soldOut = sizes.every(s => stockOf(product, s) === 0);
+  const maxQty = size ? available(size) : Infinity;
+
+  // Hardcoded options
   const cutOptions = [
-    { id: 'oversize', label: 'CORTE OVERSIZE' },
-    { id: 'hoodie', label: 'HACER HOODIE', price: 400 }
+    { id: 'oversize', label: 'CORTE OVERSIZE', priceMod: 0 },
+    { id: 'hoodie', label: 'HACER HOODIE', priceMod: priceFor(product, 'hoodie') - product.precio }
   ];
 
-  const priceFor = (cutId) => cutOptions.find(c => c.id === cutId)?.price ?? product.precio;
-
   const handleAddToCart = () => {
-    if (!selectedSize) {
+    if (!size) {
       alert('Por favor selecciona una talla');
       return;
     }
+    if (quantity > available(size)) {
+      alert(available(size) === 0
+        ? 'Ya tienes en el carrito todas las piezas disponibles de esta talla.'
+        : `Solo quedan ${available(size)} piezas de esta talla.`);
+      return;
+    }
 
+    // El stock no viaja al carrito: se vuelve a validar al pagar.
+    // eslint-disable-next-line no-unused-vars
+    const { stock, ...productData } = product;
     const itemToAdd = {
-      ...product,
-      selectedSize,
-      selectedCut,
-      price: priceFor(selectedCut)
+      ...productData,
+      selectedSize: size,
+      selectedCut: isShirt ? selectedCut : 'regular',
+      // Precio final de la pieza (la hoodie tiene precio propio). CartPage suma `precio`.
+      precioBase: product.precio,
+      precio: priceFor(product, isShirt ? selectedCut : 'regular'),
+      price: priceFor(product, isShirt ? selectedCut : 'regular'),
     };
 
     addToCart(itemToAdd, quantity);
   };
 
-  const incrementQuantity = () => setQuantity(q => q + 1);
+  const incrementQuantity = () => setQuantity(q => (q < maxQty ? q + 1 : q));
   const decrementQuantity = () => setQuantity(q => (q > 1 ? q - 1 : 1));
 
-  const currentPrice = priceFor(selectedCut);
+  const currentPrice = priceFor(product, isShirt ? selectedCut : 'regular');
 
   return (
     <div className="product-detail-container">
@@ -56,21 +79,34 @@ function ProductDetailPage({ products, addToCart }) {
         <p className="price">${currentPrice.toFixed(2)}</p>
 
         <div className="options-container">
+          {soldOut && <p className="stock-note sold-out">Agotado</p>}
+
+          {!isOneSize && (
           <div className="option-group">
             <label>Talla</label>
             <div className="size-selector">
-              {['CH', 'M', 'G', 'EG'].map(size => (
-                <button
-                  key={size}
-                  className={`size-btn ${selectedSize === size ? 'active' : ''}`}
-                  onClick={() => setSelectedSize(size)}
-                >
-                  {size}
-                </button>
-              ))}
+              {sizes.map(s => {
+                const left = stockOf(product, s);
+                return (
+                  <button
+                    key={s}
+                    className={`size-btn ${selectedSize === s ? 'active' : ''} ${left === 0 ? 'sold-out' : ''}`}
+                    disabled={left === 0}
+                    title={left === 0 ? 'Agotada' : undefined}
+                    onClick={() => { setSelectedSize(s); setQuantity(1); }}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
             </div>
+            {selectedSize && stockOf(product, selectedSize) > 0 && stockOf(product, selectedSize) <= 5 && (
+              <p className="stock-note">¡Quedan {stockOf(product, selectedSize)}!</p>
+            )}
           </div>
+          )}
 
+          {isShirt && (
           <div className="option-group">
             <label>Elige el ajuste de tu playera o hazla sudadera.</label>
             <div className="cut-selector">
@@ -81,11 +117,12 @@ function ProductDetailPage({ products, addToCart }) {
                   onClick={() => setSelectedCut(selectedCut === cut.id ? 'regular' : cut.id)}
                 >
                   <span className="cut-label">{cut.label}</span>
-                  {cut.price > product.precio && <span className="cut-price">${cut.price}</span>}
+                  {cut.priceMod > 0 && <span className="cut-price">+${cut.priceMod}</span>}
                 </div>
               ))}
             </div>
           </div>
+          )}
 
           <div className="actions-row">
             <div className="quantity-selector">
@@ -93,8 +130,8 @@ function ProductDetailPage({ products, addToCart }) {
               <span>{quantity}</span>
               <button onClick={incrementQuantity}>+</button>
             </div>
-            <button className="add-to-cart-btn" onClick={handleAddToCart}>
-              AÑADIR AL CARRITO
+            <button className="add-to-cart-btn" onClick={handleAddToCart} disabled={soldOut}>
+              {soldOut ? 'AGOTADO' : 'AÑADIR AL CARRITO'}
             </button>
           </div>
         </div>

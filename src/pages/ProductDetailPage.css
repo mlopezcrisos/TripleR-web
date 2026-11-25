@@ -201,3 +201,27 @@
         justify-content: center;
     }
 }
+/* Stock por talla */
+.size-btn.sold-out,
+.size-btn:disabled {
+  opacity: 0.35;
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.add-to-cart-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.stock-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  color: var(--amarillo-acento);
+}
+
+.stock-note.sold-out {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--rojo-acento);
+}
