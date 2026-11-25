@@ -14,7 +14,8 @@ function ProductDetailPage({ products, addToCart }) {
     return <h2>Producto no encontrado</h2>;
   }
 
-  // Hardcoded options
+  // Opciones de corte. priceMod es lo que se suma al precio base.
+  // TODO: poner el costo extra real de la hoodie (hoy está en 0).
   const cutOptions = [
     { id: 'oversize', label: 'CORTE OVERSIZE', priceMod: 0 },
     { id: 'hoodie', label: 'HACER HOODIE', priceMod: 0 }
@@ -33,10 +34,7 @@ function ProductDetailPage({ products, addToCart }) {
       price: product.precio + (cutOptions.find(c => c.id === selectedCut)?.priceMod || 0)
     };
 
-    // Add quantity times
-    for (let i = 0; i < quantity; i++) {
-      addToCart(itemToAdd);
-    }
+    addToCart(itemToAdd, quantity);
   };
 
   const incrementQuantity = () => setQuantity(q => q + 1);

@@ -31,9 +31,19 @@ import CartPage from './pages/CartPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CheckoutPage from './pages/CheckoutPage';
-import { useAuth } from './context/AuthContext';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { useAuth } from './context/useAuth';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase/config';
+import {
+  CART_OWNER_KEY,
+  CART_STORAGE_KEY,
+  getCartItemId,
+  getItemPrice,
+  loadLocalCart,
+  mergeCarts,
+  normalizeCart,
+  sameCart,
+} from './utils/cart';
 
 function App() {
   const products = [
@@ -57,52 +67,99 @@ function App() {
   ];
 
   const { user } = useAuth();
-  const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
+  const [cart, setCart] = useState(loadLocalCart);
+  // uid cuyo carrito de Firestore ya se fusionó con el local. Hasta entonces
+  // no escribimos en Firestore, para no pisar el carrito guardado.
+  const [syncedUid, setSyncedUid] = useState(null);
 
-  // Sync cart with Firestore when user logs in
+  // Al iniciar sesión: fusiona el carrito de invitado con el de Firestore y
+  // escucha cambios hechos desde otros dispositivos.
+  // Al cerrar sesión: vacía el carrito local para que no quede a la vista
+  // del siguiente invitado ni se vuelva a sumar en el próximo login.
   useEffect(() => {
-    if (user) {
-      const docRef = doc(db, "carts", user.uid);
-      const unsubscribe = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-          setCart(docSnap.data().items || []);
-        }
-      });
-      return () => unsubscribe();
+    if (!user) {
+      setSyncedUid(null);
+      if (localStorage.getItem(CART_OWNER_KEY)) {
+        localStorage.removeItem(CART_OWNER_KEY);
+        setCart([]);
+      }
+      return;
     }
+
+    const docRef = doc(db, "carts", user.uid);
+    let cancelled = false;
+    let unsubscribe = () => {};
+
+    (async () => {
+      try {
+        const snap = await getDoc(docRef);
+        if (cancelled) return;
+
+        const remote = snap.exists() ? normalizeCart(snap.data().items) : null;
+        // Si el carrito local ya era de este usuario (p. ej. recargó la
+        // página), Firestore es la fuente de verdad. Si era de invitado,
+        // se suman ambos.
+        const localIsTheirs = localStorage.getItem(CART_OWNER_KEY) === user.uid;
+        setCart(local => {
+          if (!remote) return local;
+          return localIsTheirs ? remote : mergeCarts(remote, local);
+        });
+        localStorage.setItem(CART_OWNER_KEY, user.uid);
+        setSyncedUid(user.uid);
+
+        unsubscribe = onSnapshot(docRef, (docSnap) => {
+          // Ignora el eco de nuestras propias escrituras.
+          if (docSnap.metadata.hasPendingWrites || !docSnap.exists()) return;
+          const items = normalizeCart(docSnap.data().items);
+          setCart(prev => (sameCart(prev, items) ? prev : items));
+        });
+      } catch (error) {
+        console.error("No se pudo sincronizar el carrito con Firestore:", error);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [user]);
 
-  // Save cart to localStorage (always) and Firestore (if logged in)
+  // Guarda el carrito en localStorage (siempre) y en Firestore (si hay sesión
+  // y ya se hizo la fusión).
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
 
-    if (user) {
+    if (user && syncedUid === user.uid) {
       const docRef = doc(db, "carts", user.uid);
-      setDoc(docRef, { items: cart }, { merge: true });
+      setDoc(docRef, { items: cart }, { merge: true }).catch(error => {
+        console.error("No se pudo guardar el carrito en Firestore:", error);
+      });
     }
-  }, [cart, user]);
+  }, [cart, user, syncedUid]);
 
-  const addToCart = (product) => {
+  const addToCart = (product, quantity = 1) => {
+    const cartItemId = getCartItemId(product);
     setCart(prevCart => {
-      // Create a unique ID for the cart item based on product ID and selected options
-      const cartItemId = `${product.id}-${product.selectedSize || 'default'}-${product.selectedCut || 'default'}`;
-
       const existingItem = prevCart.find(item => item.cartItemId === cartItemId);
 
       if (existingItem) {
         return prevCart.map(item =>
-          item.cartItemId === cartItemId ? { ...item, quantity: item.quantity + 1 } : item
+          item.cartItemId === cartItemId ? { ...item, quantity: item.quantity + quantity } : item
         );
       }
 
-      // If it's a new item configuration, add it with the unique cartItemId
-      // Note: We already receive 'price' calculated from the detail page, but we should ensure it persists
-      return [...prevCart, { ...product, cartItemId, quantity: 1 }];
+      return [...prevCart, { ...product, price: getItemPrice(product), cartItemId, quantity }];
     });
-    alert("¡Producto agregado al carrito!");
+    alert(quantity > 1
+      ? `¡${quantity} productos agregados al carrito!`
+      : "¡Producto agregado al carrito!");
+  };
+
+  const updateQuantity = (cartItemId, quantity) => {
+    if (quantity < 1) return;
+    setCart(prevCart => prevCart.map(item =>
+      item.cartItemId === cartItemId ? { ...item, quantity } : item
+    ));
   };
 
   const removeFromCart = (cartItemId) => {
@@ -118,7 +175,7 @@ function App() {
         <Route path="/artist/:artistId" element={<ArtistPage products={products} addToCart={addToCart} />} />
         <Route path="/search" element={<SearchPage products={products} addToCart={addToCart} />} />
         <Route path="/nosotros" element={<NosotrosPage />} />
-        <Route path="/cart" element={<CartPage cart={cart} removeFromCart={removeFromCart} />} />
+        <Route path="/cart" element={<CartPage cart={cart} updateQuantity={updateQuantity} removeFromCart={removeFromCart} />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/checkout" element={<CheckoutPage cart={cart} />} />
