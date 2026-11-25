@@ -29,45 +29,66 @@ function cleanText(value, max = 200) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
+// Los nombres de campos coinciden con lo que lee el panel /admin.
 function validateShipping(raw = {}) {
   const shipping = {
-    nombre: cleanText(raw.nombre, 120),
-    calle: cleanText(raw.calle, 200),
-    ciudad: cleanText(raw.ciudad, 100),
-    codigoPostal: cleanText(raw.codigoPostal, 10),
-    estado: cleanText(raw.estado, 100),
-    telefono: cleanText(raw.telefono, 20),
-    email: cleanText(raw.email, 200),
+    name: cleanText(raw.nombre, 120),
+    address: cleanText(raw.calle, 200),
+    city: cleanText(raw.ciudad, 100),
+    zip: cleanText(raw.codigoPostal, 10),
+    state: cleanText(raw.estado, 100),
+    phone: cleanText(raw.telefono, 20),
   };
-  for (const [key, value] of Object.entries(shipping)) {
+  const email = cleanText(raw.email, 200);
+  for (const [key, value] of Object.entries({ ...shipping, email })) {
     if (!value) throw new HttpsError('invalid-argument', `Falta el campo de envío: ${key}`);
   }
-  if (!/^\d{5}$/.test(shipping.codigoPostal)) {
+  if (!/^\d{5}$/.test(shipping.zip)) {
     throw new HttpsError('invalid-argument', 'El código postal debe tener 5 dígitos.');
   }
-  if (!/^[\d\s+()-]{8,20}$/.test(shipping.telefono)) {
+  if (!/^[\d\s+()-]{8,20}$/.test(shipping.phone)) {
     throw new HttpsError('invalid-argument', 'El teléfono no es válido.');
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(shipping.email)) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new HttpsError('invalid-argument', 'El correo no es válido.');
   }
-  return shipping;
+  return { shipping, email };
+}
+
+// Busca el producto en Firestore (products/{id}, con precio y stock por
+// talla). Si todavía no existe ahí, usa el catálogo de respaldo catalog.js.
+async function loadProduct(id) {
+  const key = String(id ?? '');
+  if (!key || key.includes('/')) return null;
+  const snap = await db.doc(`products/${key}`).get();
+  if (snap.exists) {
+    const data = snap.data();
+    if (data.activo === false) return null;
+    return { id: key, nombre: data.nombre, precio: Number(data.precio), stock: data.stock ?? null };
+  }
+  const fallback = PRODUCTS[key];
+  return fallback ? { id: key, nombre: fallback.nombre, precio: fallback.precio, stock: null } : null;
 }
 
 // Convierte el carrito que manda el navegador en partidas con precios del
 // servidor. Del navegador solo se acepta: id, talla, corte y cantidad.
-function buildItems(rawItems) {
+async function buildItems(rawItems) {
   if (!Array.isArray(rawItems) || rawItems.length === 0) {
     throw new HttpsError('invalid-argument', 'El carrito está vacío.');
   }
   if (rawItems.length > MAX_ITEMS) {
     throw new HttpsError('invalid-argument', 'Demasiados productos en el carrito.');
   }
-  return rawItems.map((raw) => {
-    const product = PRODUCTS[raw?.id];
-    if (!product) throw new HttpsError('invalid-argument', `Producto desconocido: ${raw?.id}`);
+  const items = [];
+  const wanted = {}; // `${id}|${talla}` -> piezas pedidas, para validar stock
+  for (const raw of rawItems) {
+    const product = await loadProduct(raw?.id);
+    if (!product || !Number.isFinite(product.precio)) {
+      throw new HttpsError('invalid-argument', `Producto no disponible: ${raw?.id}`);
+    }
     const size = raw.selectedSize ?? null;
-    if (size !== null && !SIZES.includes(size)) {
+    const validSizes = product.stock ? Object.keys(product.stock) : SIZES;
+    if (size !== null && !validSizes.includes(size)) {
       throw new HttpsError('invalid-argument', `Talla no válida: ${size}`);
     }
     const cutId = raw.selectedCut ?? 'regular';
@@ -77,17 +98,26 @@ function buildItems(rawItems) {
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_QTY_PER_ITEM) {
       throw new HttpsError('invalid-argument', 'Cantidad no válida.');
     }
-    const unitPrice = product.precio + cut.priceMod;
-    return {
-      productId: Number(raw.id),
+    if (product.stock) {
+      const k = `${product.id}|${size}`;
+      wanted[k] = (wanted[k] ?? 0) + quantity;
+      if (wanted[k] > Number(product.stock[size] ?? 0)) {
+        throw new HttpsError('failed-precondition',
+          `No hay suficiente stock de ${product.nombre}${size ? ` talla ${size}` : ''}.`);
+      }
+    }
+    const precio = product.precio + cut.priceMod;
+    items.push({
+      productId: product.id,
       nombre: product.nombre,
-      talla: size,
-      corte: cutId,
-      cantidad: quantity,
-      precioUnitario: unitPrice,
-      subtotal: unitPrice * quantity,
-    };
-  });
+      selectedSize: size,
+      selectedCut: cutId,
+      quantity,
+      precio,
+      subtotal: precio * quantity,
+    });
+  }
+  return items;
 }
 
 function pickOrigin(requestOrigin) {
@@ -102,8 +132,8 @@ function pickOrigin(requestOrigin) {
 export const createCheckoutSession = onCall(
   { secrets: [STRIPE_SECRET_KEY], cors: true },
   async (request) => {
-    const items = buildItems(request.data?.items);
-    const shipping = validateShipping(request.data?.shipping);
+    const items = await buildItems(request.data?.items);
+    const { shipping, email } = validateShipping(request.data?.shipping);
     const userId = request.auth?.uid ?? null; // Se permiten compras como invitado.
 
     const subtotal = items.reduce((sum, i) => sum + i.subtotal, 0);
@@ -112,8 +142,9 @@ export const createCheckoutSession = onCall(
     const orderRef = db.collection('orders').doc();
     await orderRef.set({
       userId,
-      status: 'pending',
+      status: 'pendiente',
       items,
+      email,
       shipping,
       subtotal,
       envio: SHIPPING_COST,
@@ -129,19 +160,22 @@ export const createCheckoutSession = onCall(
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         line_items: items.map((i) => ({
-          quantity: i.cantidad,
+          quantity: i.quantity,
           price_data: {
             currency: CURRENCY,
-            unit_amount: Math.round(i.precioUnitario * 100),
+            unit_amount: Math.round(i.precio * 100),
             product_data: {
               name: i.nombre,
-              description: [i.talla && `Talla ${i.talla}`, i.corte !== 'regular' && CUTS[i.corte].label]
+              description: [
+                i.selectedSize && i.selectedSize !== 'UNICA' && `Talla ${i.selectedSize}`,
+                i.selectedCut !== 'regular' && CUTS[i.selectedCut].label,
+              ]
                 .filter(Boolean)
                 .join(' · ') || undefined,
             },
           },
         })),
-        customer_email: shipping.email,
+        customer_email: email,
         client_reference_id: orderRef.id,
         metadata: { orderId: orderRef.id, userId: userId ?? '' },
         payment_intent_data: { metadata: { orderId: orderRef.id } },
@@ -155,11 +189,75 @@ export const createCheckoutSession = onCall(
       return { url: session.url, orderId: orderRef.id };
     } catch (err) {
       logger.error('Error creando la sesión de Stripe', err);
-      await orderRef.update({ status: 'error', error: String(err.message ?? err) });
+      await orderRef.update({ status: 'cancelado', error: String(err.message ?? err) });
       throw new HttpsError('internal', 'No se pudo iniciar el pago. Intenta de nuevo.');
     }
   },
 );
+
+/**
+ * Marca el pedido como pagado y descuenta el stock, todo en una transacción.
+ * Si Stripe manda el mismo evento dos veces, la segunda no hace nada.
+ */
+async function markPaid(orderId, session) {
+  const orderRef = db.doc(`orders/${orderId}`);
+  await db.runTransaction(async (tx) => {
+    const orderSnap = await tx.get(orderRef);
+    if (!orderSnap.exists) throw new Error(`Pedido ${orderId} no existe`);
+    const order = orderSnap.data();
+    if (order.status !== 'pendiente' && order.status !== 'cancelado') return; // ya procesado
+
+    // Agrupa piezas por producto y talla.
+    const perProduct = {};
+    for (const item of order.items ?? []) {
+      if (!item.selectedSize) continue;
+      perProduct[item.productId] ??= {};
+      perProduct[item.productId][item.selectedSize] =
+        (perProduct[item.productId][item.selectedSize] ?? 0) + item.quantity;
+    }
+    const refs = Object.keys(perProduct).map((id) => db.doc(`products/${id}`));
+    const snaps = refs.length ? await tx.getAll(...refs) : [];
+
+    const oversold = [];
+    snaps.forEach((snap, idx) => {
+      const stock = snap.exists ? snap.data().stock : null;
+      if (!stock) return; // producto sin control de stock
+      const updates = {};
+      for (const [size, qty] of Object.entries(perProduct[snap.id])) {
+        const current = Number(stock[size] ?? 0);
+        if (current < qty) oversold.push(`${snap.id}/${size}`);
+        updates[`stock.${size}`] = Math.max(0, current - qty);
+      }
+      tx.update(refs[idx], updates);
+    });
+
+    tx.update(orderRef, {
+      status: 'pagado',
+      paidAt: FieldValue.serverTimestamp(),
+      amountPaid: session.amount_total / 100,
+      stripePaymentIntentId: session.payment_intent ?? null,
+      customerEmail: session.customer_details?.email ?? null,
+      ...(oversold.length ? { sobreventa: oversold } : {}),
+    });
+    if (oversold.length) logger.warn(`Pedido ${orderId}: sobreventa en ${oversold.join(', ')}`);
+  });
+
+  // Vacía el carrito del usuario que compró.
+  const userId = session.metadata?.userId;
+  if (userId) {
+    await db.doc(`carts/${userId}`).set({ items: [] }, { merge: true });
+  }
+}
+
+async function cancelIfPending(orderId, reason) {
+  const orderRef = db.doc(`orders/${orderId}`);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(orderRef);
+    if (snap.exists && snap.data().status === 'pendiente') {
+      tx.update(orderRef, { status: 'cancelado', cancelReason: reason });
+    }
+  });
+}
 
 /**
  * Webhook de Stripe: confirma el pago y marca el pedido como pagado.
@@ -193,33 +291,21 @@ export const stripeWebhook = onRequest(
     try {
       switch (event.type) {
         case 'checkout.session.completed':
-        case 'checkout.session.async_payment_succeeded': {
+        case 'checkout.session.async_payment_succeeded':
           if (!orderId) break;
           if (session.payment_status !== 'paid') {
-            // Pago diferido (p. ej. OXXO): se confirma después con async_payment_succeeded.
-            await db.doc(`orders/${orderId}`).update({ status: 'awaiting_payment' });
+            // Pago diferido (p. ej. OXXO): el pedido sigue "pendiente" hasta
+            // que llegue async_payment_succeeded.
+            await db.doc(`orders/${orderId}`).update({ paymentStatus: 'awaiting_payment' });
             break;
           }
-          const orderRef = db.doc(`orders/${orderId}`);
-          await orderRef.update({
-            status: 'paid',
-            paidAt: FieldValue.serverTimestamp(),
-            amountPaid: session.amount_total / 100,
-            stripePaymentIntentId: session.payment_intent ?? null,
-            customerEmail: session.customer_details?.email ?? null,
-          });
-          // Vacía el carrito del usuario que compró.
-          const userId = session.metadata?.userId;
-          if (userId) {
-            await db.doc(`carts/${userId}`).set({ items: [] }, { merge: true });
-          }
+          await markPaid(orderId, session);
           break;
-        }
         case 'checkout.session.async_payment_failed':
-          if (orderId) await db.doc(`orders/${orderId}`).update({ status: 'payment_failed' });
+          if (orderId) await cancelIfPending(orderId, 'payment_failed');
           break;
         case 'checkout.session.expired':
-          if (orderId) await db.doc(`orders/${orderId}`).update({ status: 'expired' });
+          if (orderId) await cancelIfPending(orderId, 'expired');
           break;
         default:
           break;

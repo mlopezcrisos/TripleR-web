@@ -28,9 +28,8 @@ function CheckoutSuccessPage({ clearCart }) {
     }, [user, orderId]);
 
     const message =
-        status === 'paid' ? 'Pago confirmado.' :
-        status === 'awaiting_payment' ? 'Estamos esperando la confirmación de tu pago.' :
-        status === 'pending' ? 'Confirmando tu pago...' :
+        ['pagado', 'enviado', 'entregado'].includes(status) ? 'Pago confirmado.' :
+        status === 'pendiente' ? 'Confirmando tu pago...' :
         null;
 
     return (

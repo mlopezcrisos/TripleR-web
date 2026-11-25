@@ -4,16 +4,19 @@ Flujo de compra:
 
 1. En `/checkout` el cliente llena su dirección y da clic en **Pagar**.
 2. La app llama a la función `createCheckoutSession`, que:
-   - recalcula precios con `catalog.js` (nunca confía en el precio del navegador),
-   - crea el pedido en Firestore `orders/{id}` con `status: "pending"`,
+   - toma precio y stock de Firestore `products/{id}` (o de `catalog.js` si el
+     producto aún no está ahí); nunca confía en el precio del navegador,
+   - rechaza la compra si no hay stock suficiente de la talla,
+   - crea el pedido en Firestore `orders/{id}` con `status: "pendiente"`,
    - crea una sesión de Stripe Checkout y devuelve su URL.
 3. El cliente paga en la página segura de Stripe.
-4. Stripe avisa a la función `stripeWebhook`, que marca el pedido como
-   `paid` y vacía el carrito del usuario.
+4. Stripe avisa a la función `stripeWebhook`, que en una transacción marca
+   el pedido como `pagado`, descuenta el stock por talla y vacía el carrito.
 5. Stripe regresa al cliente a `/checkout/success?order={id}`.
 
-Estados de un pedido: `pending`, `paid`, `awaiting_payment` (pagos diferidos
-como OXXO), `payment_failed`, `expired`, `error`.
+Estados de un pedido (los mismos del panel /admin): `pendiente`, `pagado`,
+`enviado`, `entregado`, `cancelado`. Si el pago expira o falla, el pedido pasa
+a `cancelado` con `cancelReason`.
 
 ## Puesta en marcha (una sola vez)
 
@@ -58,7 +61,7 @@ Cloud Functions no funcionan en el plan gratuito Spark) y tener instalado
    ```
 
 6. Prueba con la tarjeta `4242 4242 4242 4242`, cualquier fecha futura y
-   cualquier CVC. El pedido debe aparecer en Firestore con `status: "paid"`.
+   cualquier CVC. El pedido debe aparecer en Firestore con `status: "pagado"`.
 
 Para pasar a cobros reales, repite los pasos 2 y 5 con las claves `sk_live_`
 y un webhook en modo live.
@@ -78,7 +81,7 @@ Nota: la app web apunta a las funciones desplegadas. Para usar el emulador
 desde la app hay que llamar a `connectFunctionsEmulator` en
 `src/firebase/config.js`.
 
-## Si cambias precios o productos
+## Precios y productos
 
-Actualiza `functions/catalog.js` además de `src/App.jsx` y vuelve a
-desplegar las funciones.
+Se administran desde `/admin` (colección `products`). `functions/catalog.js`
+solo se usa como respaldo para productos que no estén en Firestore.
