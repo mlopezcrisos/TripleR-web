@@ -1,0 +1,63 @@
+/* Páginas legales: usan .page-head, .page-title, .eyebrow y .sticker-card de index.css */
+.legal-head {
+  max-width: 880px;
+}
+
+.legal-wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 1.75rem var(--gutter) 4rem;
+}
+
+.legal-body {
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  line-height: 1.7;
+  font-size: 1rem;
+}
+
+.legal-body > :first-child {
+  margin-top: 0;
+}
+
+.legal-body h2 {
+  font-family: var(--font-display);
+  font-weight: normal;
+  color: var(--azul-principal);
+  font-size: 1.45rem;
+  line-height: 1.15;
+  margin: 2rem 0 0.5rem;
+}
+
+.legal-body a {
+  color: var(--azul-principal);
+  font-weight: 600;
+}
+
+.legal-body li {
+  margin-bottom: 0.4rem;
+}
+
+.legal-pendiente {
+  background: var(--amarillo-acento);
+  color: var(--negro-texto);
+  padding: 0 0.3em;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+.legal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.75rem;
+  margin-top: 2rem;
+}
+
+.legal-nav a {
+  color: var(--amarillo-acento);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.legal-nav a:hover {
+  text-decoration: underline;
+}

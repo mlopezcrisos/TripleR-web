@@ -1,6 +1,6 @@
 // En: src/App.jsx
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
@@ -16,7 +16,6 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CheckoutPage from './pages/CheckoutPage';
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
-import AdminPage from './pages/AdminPage';
 import { useCatalog } from './hooks/useCatalog';
 import { useAuth } from './context/useAuth';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
@@ -31,6 +30,13 @@ import {
   normalizeCart,
   sameCart,
 } from './utils/cart';
+
+// Páginas que casi nadie abre: se descargan solo cuando se visitan.
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const TerminosPage = lazy(() => import('./pages/legal/TerminosPage'));
+const PrivacidadPage = lazy(() => import('./pages/legal/PrivacidadPage'));
+const EnviosPage = lazy(() => import('./pages/legal/EnviosPage'));
+const DevolucionesPage = lazy(() => import('./pages/legal/DevolucionesPage'));
 
 function App() {
   const { products, artists, loading: catalogLoading } = useCatalog();
@@ -151,6 +157,7 @@ function App() {
   return (
     <div>
       <Navbar cart={cart} />
+      <Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<HomePage artists={artistsWithProducts} products={products} />} />
         <Route path="/product/:productId" element={<ProductDetailPage products={products} loading={catalogLoading} cart={cart} addToCart={addToCart} />} />
@@ -162,8 +169,13 @@ function App() {
         <Route path="/register" element={<RegisterPage products={products} />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/checkout" element={<CheckoutPage cart={cart} />} />
+        <Route path="/terminos" element={<TerminosPage />} />
+        <Route path="/privacidad" element={<PrivacidadPage />} />
+        <Route path="/envios" element={<EnviosPage />} />
+        <Route path="/devoluciones" element={<DevolucionesPage />} />
         <Route path="/checkout/success" element={<CheckoutSuccessPage clearCart={clearCart} />} />
       </Routes>
+      </Suspense>
       <Footer />
       {toast && (
         <div className="toast" role="status" key={toast.id}>

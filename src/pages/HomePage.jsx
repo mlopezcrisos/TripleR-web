@@ -81,7 +81,7 @@ function HomePage({ artists, products = [] }) {
             return (
               <Link to={`/artist/${artist.id}`} key={artist.id} className="artist-card">
                 <div className="artist-image-container">
-                  <img src={artist.image} alt={artist.name} className="artist-image" />
+                  <img src={artist.image} alt={artist.name} className="artist-image" loading="lazy" decoding="async" />
                   <div className="artist-overlay">
                     <div>
                       <h3 className="artist-name">{artist.name}</h3>

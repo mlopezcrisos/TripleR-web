@@ -70,7 +70,7 @@ function ProductDetailPage({ products, loading, cart = [], addToCart }) {
   return (
     <div className="product-detail-container">
       <div className="product-image-section">
-        <img src={product.imagen} alt={product.nombre} />
+        <img src={product.imagen} alt={product.nombre} decoding="async" fetchPriority="high" />
       </div>
 
       <div className="product-info-section">

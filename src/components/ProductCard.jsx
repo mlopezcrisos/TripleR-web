@@ -15,7 +15,7 @@ function ProductCard(props) {
     <Link to={`/product/${id}`} className={`card-link ${soldOut ? 'is-sold-out' : ''}`}>
       <article className="card">
         <div className="card-media">
-          <img src={imagen} alt={nombre} />
+          <img src={imagen} alt={nombre} loading="lazy" decoding="async" />
           {soldOut && <span className="card-badge card-badge-sold">Agotado</span>}
           {!soldOut && hasHoodie && <span className="card-badge">También en hoodie</span>}
           <span className="card-view" aria-hidden="true">Ver producto →</span>

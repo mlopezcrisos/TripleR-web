@@ -1,5 +1,7 @@
+import { Link } from 'react-router-dom';
 import './Footer.css';
-import logo from '../assets/logo-horizontal.png';
+import { LEGAL_PAGES } from '../data/legal';
+import logo from '../assets/logo-horizontal.webp';
 
 function Footer() {
     return (
@@ -7,7 +9,7 @@ function Footer() {
             <div className="footer-container">
                 {/* Brand Section */}
                 <div className="footer-section brand">
-                    <img src={logo} alt="Triple R Logo" className="footer-logo" />
+                    <img src={logo} alt="Triple R Logo" className="footer-logo" loading="lazy" decoding="async" />
                     <p className="footer-description">
                         Tu destino número uno para merch oficial de tus artistas favoritos.
                         Estilo, música y autenticidad en cada prenda.
@@ -20,7 +22,7 @@ function Footer() {
                                 <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
                             </svg>
                         </a>
-                        <a href="mailto:contacto@tripler.com" aria-label="Email">
+                        <a href="mailto:tripleerremx@gmail.com" aria-label="Email">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                                 <polyline points="22,6 12,13 2,6"></polyline>
@@ -37,6 +39,16 @@ function Footer() {
                         <li><a href="/nosotros">Nosotros</a></li>
                         <li><a href="/search">Buscar</a></li>
                         <li><a href="/cart">Carrito</a></li>
+                    </ul>
+                </div>
+
+                {/* Legal Section */}
+                <div className="footer-section links">
+                    <h3>Ayuda</h3>
+                    <ul>
+                        {LEGAL_PAGES.map(p => (
+                            <li key={p.path}><Link to={p.path}>{p.title}</Link></li>
+                        ))}
                     </ul>
                 </div>
 

@@ -50,7 +50,7 @@ function CartPage({ cart, updateQuantity, removeFromCart }) {
                         return (
                             <li key={item.cartItemId} className="cart-item sticker-card">
                                 <Link to={`/product/${item.id}`} className="cart-item-media">
-                                    <img src={item.imagen} alt={item.nombre} />
+                                    <img src={item.imagen} alt={item.nombre} loading="lazy" decoding="async" />
                                 </Link>
 
                                 <div className="cart-item-info">
