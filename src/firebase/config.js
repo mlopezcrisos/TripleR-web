@@ -3,6 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -24,3 +25,11 @@ getAnalytics(app);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 export const db = getFirestore(app);
+export const functions = getFunctions(app);
+
+// Para probar pagos en local con el emulador de Firebase:
+// crea un archivo .env.local con VITE_USE_FUNCTIONS_EMULATOR=true
+if (import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === "true") {
+    connectFunctionsEmulator(functions, "127.0.0.1", 5001);
+    console.log("Firebase: usando el emulador de Cloud Functions");
+}

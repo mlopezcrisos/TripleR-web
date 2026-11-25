@@ -1,6 +1,6 @@
 // En: src/App.jsx
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
@@ -15,6 +15,7 @@ import CartPage from './pages/CartPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CheckoutPage from './pages/CheckoutPage';
+import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 import AdminPage from './pages/AdminPage';
 import { useCatalog } from './hooks/useCatalog';
 import { useAuth } from './context/useAuth';
@@ -145,6 +146,8 @@ function App() {
     setCart(prevCart => prevCart.filter(item => item.cartItemId !== cartItemId));
   };
 
+  const clearCart = useCallback(() => setCart([]), []);
+
   return (
     <div>
       <Navbar cart={cart} />
@@ -159,6 +162,7 @@ function App() {
         <Route path="/register" element={<RegisterPage products={products} />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/checkout" element={<CheckoutPage cart={cart} />} />
+        <Route path="/checkout/success" element={<CheckoutSuccessPage clearCart={clearCart} />} />
       </Routes>
       <Footer />
       {toast && (
