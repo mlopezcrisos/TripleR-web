@@ -1,6 +1,6 @@
 // En: src/App.jsx
 
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
@@ -15,6 +15,7 @@ import CartPage from './pages/CartPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CheckoutPage from './pages/CheckoutPage';
+import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 import { useCatalog } from './hooks/useCatalog';
 import { useAuth } from './context/useAuth';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
@@ -151,6 +152,8 @@ function App() {
     setCart(prevCart => prevCart.filter(item => item.cartItemId !== cartItemId));
   };
 
+  const clearCart = useCallback(() => setCart([]), []);
+
   return (
     <div>
       <Navbar cart={cart} />
@@ -170,6 +173,7 @@ function App() {
         <Route path="/privacidad" element={<PrivacidadPage />} />
         <Route path="/envios" element={<EnviosPage />} />
         <Route path="/devoluciones" element={<DevolucionesPage />} />
+        <Route path="/checkout/success" element={<CheckoutSuccessPage clearCart={clearCart} />} />
       </Routes>
       </Suspense>
       <Footer />
