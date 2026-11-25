@@ -1,6 +1,6 @@
 // En: src/App.jsx
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
@@ -31,6 +31,7 @@ import CartPage from './pages/CartPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CheckoutPage from './pages/CheckoutPage';
+import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 import { useAuth } from './context/AuthContext';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase/config';
@@ -109,6 +110,8 @@ function App() {
     setCart(prevCart => prevCart.filter(item => item.cartItemId !== cartItemId));
   };
 
+  const clearCart = useCallback(() => setCart([]), []);
+
   return (
     <div>
       <Navbar cart={cart} />
@@ -122,6 +125,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/checkout" element={<CheckoutPage cart={cart} />} />
+        <Route path="/checkout/success" element={<CheckoutSuccessPage clearCart={clearCart} />} />
       </Routes>
       <Footer />
     </div>
