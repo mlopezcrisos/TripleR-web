@@ -1,18 +1,53 @@
-rules_version='2'
+rules_version = '2';
 
+// Reglas de seguridad de Firestore para TRIPLE R.
+// Todo lo que no esté permitido aquí abajo queda denegado por defecto.
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2026, 1, 7);
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Carrito: un documento por usuario, con id = uid.
+    // La app escribe { items: [...] } con setDoc(..., { merge: true }).
+    match /carts/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['items'])
+        && request.resource.data.items is list
+        && request.resource.data.items.size() <= 100;
+    }
+
+    // Pedidos: cada pedido guarda el uid del comprador en `userId`.
+    // El cliente solo puede leer sus propios pedidos. Crear o modificar
+    // pedidos debe hacerlo el backend (Admin SDK, que ignora estas reglas)
+    // después de confirmar el pago, para que nadie pueda inventarse un
+    // pedido "pagado" desde el navegador.
+    match /orders/{orderId} {
+      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // Perfil de usuario (para cuando se guarden datos como dirección).
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // Catálogo: lectura pública, escritura solo desde la consola de
+    // Firebase o el backend.
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /artists/{artistId} {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }
