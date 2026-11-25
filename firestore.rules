@@ -13,6 +13,30 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    // Administradores: quien tenga un documento en admins/{uid}.
+    // Ese documento se crea a mano en la consola de Firebase.
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Forma mínima de un producto del catálogo.
+    function isValidProduct(p) {
+      return p.nombre is string && p.nombre.size() > 0
+        && p.precio is number && p.precio >= 0
+        && p.artist is string
+        && p.imagen is string
+        && p.stock is map
+        && (!('activo' in p) || p.activo is bool);
+    }
+
+    // Cada usuario solo puede ver si él mismo es admin; nadie lo puede
+    // cambiar desde el navegador.
+    match /admins/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
     // Carrito: un documento por usuario, con id = uid.
     // La app escribe { items: [...] } con setDoc(..., { merge: true }).
     match /carts/{uid} {
@@ -28,9 +52,13 @@ service cloud.firestore {
     // pedidos debe hacerlo el backend (Admin SDK, que ignora estas reglas)
     // después de confirmar el pago, para que nadie pueda inventarse un
     // pedido "pagado" desde el navegador.
+    // Los admins pueden ver todos los pedidos y cambiar solo su `status`.
     match /orders/{orderId} {
-      allow read: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow write: if false;
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow create, delete: if false;
     }
 
     // Perfil de usuario (para cuando se guarden datos como dirección).
@@ -38,16 +66,21 @@ service cloud.firestore {
       allow read, write: if isOwner(uid);
     }
 
-    // Catálogo: lectura pública, escritura solo desde la consola de
-    // Firebase o el backend.
+    // Catálogo: lectura pública. Escriben los admins desde /admin
+    // (y el backend de pagos con Admin SDK, para descontar stock).
+    // No se borran productos: se ocultan con activo = false.
     match /products/{productId} {
       allow read: if true;
-      allow write: if false;
+      allow create, update: if isAdmin() && isValidProduct(request.resource.data);
+      allow delete: if false;
     }
 
     match /artists/{artistId} {
       allow read: if true;
-      allow write: if false;
+      allow create, update: if isAdmin()
+        && request.resource.data.name is string
+        && request.resource.data.image is string;
+      allow delete: if false;
     }
   }
 }
