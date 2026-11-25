@@ -1,122 +1,144 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { getCartTotal, getItemPrice } from '../utils/cart';
+import './CartPage.css';
+
+// Mismo umbral que anuncia la barra superior de la tienda.
+const FREE_SHIPPING_FROM = 2000;
+const CUT_LABELS = { oversize: 'Oversize', hoodie: 'Hoodie' };
+const SIZE_LABELS = { UNICA: 'Talla única' };
+
+const money = n => `$${Number(n).toLocaleString('es-MX')}`;
 
 function CartPage({ cart, updateQuantity, removeFromCart }) {
     const navigate = useNavigate();
     const total = getCartTotal(cart);
+    const pieces = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const missing = Math.max(0, FREE_SHIPPING_FROM - total);
+    const progress = Math.min(100, Math.round((total / FREE_SHIPPING_FROM) * 100));
 
-    const handleCheckout = () => {
-        navigate('/checkout');
-    };
-
-    return (
-        <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', minHeight: '60vh' }}>
-            <h1 style={{ textAlign: 'center', color: 'var(--amarillo-acento)', marginBottom: '2rem' }}>Tu Carrito</h1>
-
-            {cart.length === 0 ? (
-                <div style={{ textAlign: 'center' }}>
-                    <p style={{ fontSize: '1.2rem' }}>Tu carrito está vacío.</p>
-                    <Link to="/" style={{ color: 'var(--amarillo-acento)', textDecoration: 'none', fontSize: '1.2rem' }}>
-                        Volver a la tienda
+    if (cart.length === 0) {
+        return (
+            <div className="cart-page">
+                <div className="cart-empty sticker-card">
+                    <p className="eyebrow cart-empty-eyebrow">Tu carrito</p>
+                    <h1 className="cart-empty-title">Está vacío… por ahora.</h1>
+                    <p className="cart-empty-text">Encuentra la merch de tus artistas favoritos y arma tu outfit.</p>
+                    <Link to="/" className="btn btn-primary">
+                        Ver merch <span className="arrow" aria-hidden="true">→</span>
                     </Link>
                 </div>
-            ) : (
-                <>
-                    <div className="cart-items" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {cart.map((item) => (
-                            <div key={item.cartItemId} style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                padding: '1rem',
-                                borderRadius: '8px'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <img src={item.imagen} alt={item.nombre} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
-                                    <div>
-                                        <h3 style={{ margin: '0', fontSize: '1rem' }}>{item.nombre}</h3>
-                                        <p style={{ margin: '0', color: 'var(--amarillo-acento)' }}>${getItemPrice(item)} c/u · Subtotal ${getItemPrice(item) * item.quantity}</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="cart-page">
+            <header className="page-head">
+                <p className="eyebrow">Tu pedido</p>
+                <h1 className="page-title">
+                    Carrito <span className="count">({pieces})</span>
+                </h1>
+            </header>
+
+            <div className="cart-layout">
+                <ul className="cart-items">
+                    {cart.map((item) => {
+                        const unit = getItemPrice(item);
+                        const cut = item.selectedCut && item.selectedCut !== 'regular'
+                            ? CUT_LABELS[item.selectedCut] || item.selectedCut
+                            : null;
+                        return (
+                            <li key={item.cartItemId} className="cart-item sticker-card">
+                                <Link to={`/product/${item.id}`} className="cart-item-media">
+                                    <img src={item.imagen} alt={item.nombre} />
+                                </Link>
+
+                                <div className="cart-item-info">
+                                    <Link to={`/product/${item.id}`} className="cart-item-name">{item.nombre}</Link>
+                                    <div className="cart-item-tags">
                                         {item.selectedSize && (
-                                            <p style={{ margin: '0', fontSize: '0.8rem', color: '#ccc' }}>Talla: {item.selectedSize}</p>
+                                            <span className="tag">{SIZE_LABELS[item.selectedSize] || `Talla ${item.selectedSize}`}</span>
                                         )}
-                                        {item.selectedCut && item.selectedCut !== 'regular' && (
-                                            <p style={{ margin: '0', fontSize: '0.8rem', color: '#ccc' }}>Corte: {item.selectedCut}</p>
-                                        )}
+                                        {cut && <span className="tag">{cut}</span>}
                                     </div>
+                                    <p className="cart-item-unit">{money(unit)} c/u</p>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+
+                                <div className="cart-item-side">
+                                    <p className="cart-item-subtotal">{money(unit * item.quantity)}</p>
+                                    <div className="stepper">
+                                        <button
+                                            onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
+                                            disabled={item.quantity <= 1}
+                                            aria-label={`Quitar uno de ${item.nombre}`}
+                                        >
+                                            −
+                                        </button>
+                                        <span aria-live="polite">{item.quantity}</span>
+                                        <button
+                                            onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
+                                            aria-label={`Agregar uno de ${item.nombre}`}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
                                     <button
-                                        onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
-                                        disabled={item.quantity <= 1}
-                                        aria-label={`Quitar uno de ${item.nombre}`}
-                                        style={{ ...qtyButtonStyle, opacity: item.quantity <= 1 ? 0.4 : 1 }}
+                                        className="cart-item-remove"
+                                        onClick={() => removeFromCart(item.cartItemId)}
+                                        aria-label={`Eliminar ${item.nombre} del carrito`}
                                     >
-                                        −
-                                    </button>
-                                    <span style={{ minWidth: '1.5rem', textAlign: 'center' }}>{item.quantity}</span>
-                                    <button
-                                        onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
-                                        aria-label={`Agregar uno de ${item.nombre}`}
-                                        style={qtyButtonStyle}
-                                    >
-                                        +
+                                        Quitar
                                     </button>
                                 </div>
-                                <button
-                                    onClick={() => removeFromCart(item.cartItemId)}
-                                    aria-label={`Eliminar ${item.nombre} del carrito`}
-                                    style={{
-                                        background: 'none',
-                                        border: 'none',
-                                        color: 'var(--rojo-acento)',
-                                        cursor: 'pointer',
-                                        fontSize: '1.5rem'
-                                    }}
-                                >
-                                    &times;
-                                </button>
-                                </div>
-                            </div>
-                        ))}
+                            </li>
+                        );
+                    })}
+                </ul>
+
+                <aside className="cart-summary sticker-card" aria-label="Resumen del pedido">
+                    <h2 className="cart-summary-title">Resumen</h2>
+
+                    <div className="shipping-meter">
+                        <p className="shipping-meter-text">
+                            {missing > 0
+                                ? <>Te faltan <strong>{money(missing)}</strong> para el envío gratis</>
+                                : <><strong>¡Ya tienes envío gratis!</strong></>}
+                        </p>
+                        <div
+                            className="shipping-meter-bar"
+                            role="progressbar"
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-valuenow={progress}
+                            aria-label="Avance hacia el envío gratis"
+                        >
+                            <span style={{ width: `${progress}%` }} className={missing === 0 ? 'done' : ''} />
+                        </div>
                     </div>
 
-                    <div style={{ marginTop: '2rem', textAlign: 'right', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '1rem' }}>
-                        <h2 style={{ color: 'var(--amarillo-acento)' }}>Total: ${total}</h2>
-                        <button
-                            onClick={handleCheckout}
-                            style={{
-                                backgroundColor: 'var(--amarillo-acento)',
-                                color: 'var(--negro-texto)',
-                                border: 'none',
-                                padding: '1rem 2rem',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                fontSize: '1.2rem',
-                                fontFamily: "'Lilita One', sans-serif",
-                                textTransform: 'uppercase',
-                                marginTop: '1rem'
-                            }}>
-                            Proceder al Pago
-                        </button>
-                    </div>
-                </>
-            )}
+                    <dl className="cart-summary-rows">
+                        <div>
+                            <dt>Subtotal</dt>
+                            <dd>{money(total)}</dd>
+                        </div>
+                        <div>
+                            <dt>Envío</dt>
+                            <dd>{missing === 0 ? 'Gratis' : 'Se calcula al pagar'}</dd>
+                        </div>
+                        <div className="cart-summary-total">
+                            <dt>Total</dt>
+                            <dd>{money(total)} <small>MXN</small></dd>
+                        </div>
+                    </dl>
+
+                    <button className="btn btn-primary btn-block" onClick={() => navigate('/checkout')}>
+                        Proceder al pago <span className="arrow" aria-hidden="true">→</span>
+                    </button>
+                    <Link to="/" className="cart-summary-continue">Seguir comprando</Link>
+                </aside>
+            </div>
         </div>
     );
 }
-
-const qtyButtonStyle = {
-    width: '2rem',
-    height: '2rem',
-    borderRadius: '4px',
-    border: '1px solid rgba(255, 255, 255, 0.4)',
-    background: 'none',
-    color: 'inherit',
-    cursor: 'pointer',
-    fontSize: '1.1rem',
-    lineHeight: 1
-};
 
 export default CartPage;

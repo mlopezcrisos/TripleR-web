@@ -20,10 +20,13 @@
   color: var(--crema-fondo);
   text-align: center;
   padding: 0.5rem;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  font-stretch: 85%;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   width: 100%;
   box-sizing: border-box;
-  max-height: 50px;
+  max-height: 80px;
   overflow: hidden;
   transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
 }
@@ -36,9 +39,10 @@
   padding: 1rem 2rem;
   width: 100%;
   box-sizing: border-box;
-  background-color: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: rgba(30, 58, 138, 0.86);
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  border-bottom: 1px solid var(--azul-borde);
   transition: all 0.3s ease;
 }
 
@@ -51,7 +55,8 @@
 /* Shrink Navbar when scrolled */
 .header-container.scrolled .navbar {
   padding: 0.5rem 2rem;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(23, 46, 110, 0.92);
+  box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.6);
 }
 
 /* Shrink Logo when scrolled */
@@ -67,24 +72,25 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  gap: 1.5rem;
+  gap: 2.25rem;
 }
 
 .navbar-links a {
   color: var(--crema-fondo);
   text-decoration: none;
-  font-size: 1.2rem;
+  font-size: 0.9rem;
+  font-stretch: 80%;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   position: relative;
   z-index: 1;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  transition: transform 0.2s ease;
+  padding: 0.5rem 0.25rem;
+  transition: color 0.2s ease;
 }
 
 .navbar-links a:hover {
-  transform: translateY(-2px);
-  opacity: 0.8;
+  color: var(--amarillo-acento);
 }
 
 /* Navbar Icons (Right side) */
@@ -99,17 +105,30 @@
   height: 24px;
   cursor: pointer;
   stroke: var(--crema-fondo);
-  transition: transform 0.2s ease;
+  transition: stroke 0.2s ease, transform 0.2s ease;
 }
 
 .icon:hover {
-  transform: scale(1.1);
+  stroke: var(--amarillo-acento);
+  transform: translateY(-1px);
 }
 
-/* Remove old pseudo-elements */
-.navbar-links a::before,
+/* Subrayado amarillo al pasar el mouse */
 .navbar-links a::after {
-  display: none;
+  content: '';
+  position: absolute;
+  left: 0.25rem;
+  right: 0.25rem;
+  bottom: 0.15rem;
+  height: 2px;
+  background: var(--amarillo-acento);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s var(--ease-out);
+}
+
+.navbar-links a:hover::after {
+  transform: scaleX(1);
 }
 
 /* Search Styles */
@@ -120,10 +139,12 @@
 }
 
 .search-input {
-  padding: 0.5rem;
-  border: 1px solid var(--crema-fondo);
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.2);
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--azul-borde);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
   color: var(--crema-fondo);
   outline: none;
   width: 150px;
@@ -135,8 +156,9 @@
 }
 
 .search-input:focus {
-  background: rgba(255, 255, 255, 0.3);
-  width: 200px;
+  background: rgba(255, 255, 255, 0.14);
+  border-color: var(--amarillo-acento);
+  width: 220px;
 }
 
 /* Mobile Menu Icon */
