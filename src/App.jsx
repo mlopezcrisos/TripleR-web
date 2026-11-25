@@ -23,6 +23,8 @@ import { db } from './firebase/config';
 
 function App() {
   const { products, artists, loading: catalogLoading } = useCatalog();
+  // En el inicio solo aparecen artistas con al menos un producto visible.
+  const artistsWithProducts = artists.filter(a => products.some(p => p.artist === a.id));
 
   const { user } = useAuth();
   const [cart, setCart] = useState(() => {
@@ -81,7 +83,7 @@ function App() {
     <div>
       <Navbar cart={cart} />
       <Routes>
-        <Route path="/" element={<HomePage artists={artists} />} />
+        <Route path="/" element={<HomePage artists={artistsWithProducts} />} />
         <Route path="/product/:productId" element={<ProductDetailPage products={products} loading={catalogLoading} cart={cart} addToCart={addToCart} />} />
         <Route path="/artist/:artistId" element={<ArtistPage products={products} artists={artists} addToCart={addToCart} />} />
         <Route path="/search" element={<SearchPage products={products} addToCart={addToCart} />} />
