@@ -39,6 +39,111 @@ body {
   color: var(--crema-fondo);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Fondo con profundidad: brillos suaves de la paleta, trama de puntos y grano.
+   Va en una capa fija para que no se repita ni salte al hacer scroll. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 36rem at 88% -8%, rgba(251, 191, 36, 0.13), transparent 62%),
+    radial-gradient(50rem 40rem at -12% 18%, rgba(220, 38, 38, 0.10), transparent 60%),
+    radial-gradient(70rem 50rem at 50% 115%, rgba(10, 20, 55, 0.55), transparent 65%),
+    radial-gradient(rgba(254, 243, 199, 0.07) 1px, transparent 1.4px) 0 0 / 16px 16px,
+    var(--azul-principal);
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Tarjeta crema tipo sticker: borde negro y sombra dura */
+.sticker-card {
+  background: var(--crema-fondo);
+  color: var(--negro-texto);
+  border: 2px solid var(--negro-texto);
+  border-radius: var(--radius-md);
+  box-shadow: 6px 6px 0 0 var(--negro-texto);
+}
+
+/* Encabezado de páginas funcionales (carrito, cuenta, etc.) */
+.page-head {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 3.5rem) var(--gutter) 0;
+}
+
+.page-title {
+  margin: 0.4rem 0 0;
+  font-size: clamp(2.5rem, 6vw, 4.25rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.page-title .count {
+  color: var(--amarillo-acento);
+}
+
+/* Campos de formulario sobre crema */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field-label {
+  font-stretch: 80%;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(23, 23, 23, 0.7);
+}
+
+.field-input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 2px solid rgba(23, 23, 23, 0.18);
+  border-radius: var(--radius-sm);
+  background: #FFFBEB;
+  color: var(--negro-texto);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field-input::placeholder {
+  color: rgba(23, 23, 23, 0.4);
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: var(--azul-principal);
+  box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.15);
+}
+
+.form-error {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-sm);
+  background: rgba(220, 38, 38, 0.1);
+  border: 1.5px solid var(--rojo-acento);
+  color: #991B1B;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 h1,
@@ -104,6 +209,15 @@ button {
   background: var(--amarillo-acento);
   color: var(--negro-texto);
   box-shadow: 0 4px 0 0 #B7860F;
+}
+
+.sticker-card .btn-primary {
+  border-color: var(--negro-texto);
+  box-shadow: 0 4px 0 0 var(--negro-texto);
+}
+
+.sticker-card .btn-primary:hover {
+  box-shadow: 0 6px 0 0 var(--negro-texto);
 }
 
 .btn-primary:hover {
@@ -232,6 +346,35 @@ button {
     opacity: 0;
     transform: translate(-50%, 16px);
   }
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-dark {
+  background: var(--negro-texto);
+  color: var(--crema-fondo);
+}
+
+.btn-dark:hover {
+  background: var(--azul-principal);
+}
+
+.btn-outline-dark {
+  background: transparent;
+  color: var(--negro-texto);
+  border-color: var(--negro-texto);
+}
+
+.btn-outline-dark:hover {
+  background: var(--negro-texto);
+  color: var(--crema-fondo);
+}
+
+/* Etiquetas sobre fondo crema: azul en lugar de amarillo para que se lean */
+.sticker-card .eyebrow {
+  color: var(--azul-principal);
 }
 
 @media (prefers-reduced-motion: reduce) {

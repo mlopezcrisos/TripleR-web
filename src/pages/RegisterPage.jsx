@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '../context/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
+import AuthLayout from '../components/AuthLayout';
 
-function RegisterPage() {
+function RegisterPage({ products = [] }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -27,96 +28,57 @@ function RegisterPage() {
     };
 
     return (
-        <div style={{
-            minHeight: '80vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '2rem'
-        }}>
-            <div style={{
-                backgroundColor: 'rgba(255,255,255,0.05)',
-                padding: '3rem',
-                borderRadius: '16px',
-                width: '100%',
-                maxWidth: '400px',
-                border: '1px solid rgba(255,255,255,0.1)'
-            }}>
-                <h2 style={{
-                    color: 'var(--amarillo-acento)',
-                    textAlign: 'center',
-                    marginBottom: '2rem',
-                    fontSize: '2rem'
-                }}>Crear Cuenta</h2>
-
-                {error && <div style={{ color: 'var(--rojo-acento)', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
-
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <AuthLayout
+            eyebrow="Únete a Triple R"
+            title="Crear cuenta"
+            subtitle="Tu carrito te sigue a cualquier dispositivo."
+            products={products}
+            footer={<>¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link></>}
+        >
+            <form onSubmit={handleSubmit} className="auth-form">
+                {error && <p className="form-error" role="alert">{error}</p>}
+                <label className="field">
+                    <span className="field-label">Correo electrónico</span>
                     <input
                         type="email"
-                        placeholder="Correo electrónico"
+                        className="field-input"
+                        placeholder="tu@correo.com"
+                        autoComplete="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        style={{
-                            padding: '1rem',
-                            borderRadius: '8px',
-                            border: 'none',
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            color: 'white',
-                            fontSize: '1rem'
-                        }}
                         required
                     />
+                </label>
+                <label className="field">
+                    <span className="field-label">Contraseña</span>
                     <input
                         type="password"
-                        placeholder="Contraseña"
+                        className="field-input"
+                        placeholder="Mínimo 6 caracteres"
+                        autoComplete="new-password"
+                        minLength={6}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        style={{
-                            padding: '1rem',
-                            borderRadius: '8px',
-                            border: 'none',
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            color: 'white',
-                            fontSize: '1rem'
-                        }}
                         required
                     />
+                </label>
+                <label className="field">
+                    <span className="field-label">Confirmar contraseña</span>
                     <input
                         type="password"
-                        placeholder="Confirmar Contraseña"
+                        className="field-input"
+                        placeholder="Repite tu contraseña"
+                        autoComplete="new-password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        style={{
-                            padding: '1rem',
-                            borderRadius: '8px',
-                            border: 'none',
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            color: 'white',
-                            fontSize: '1rem'
-                        }}
                         required
                     />
-                    <button type="submit" style={{
-                        backgroundColor: 'var(--amarillo-acento)',
-                        color: 'var(--negro-texto)',
-                        padding: '1rem',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '1.1rem',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        marginTop: '1rem'
-                    }}>
-                        Registrarse
-                    </button>
-                </form>
-
-                <div style={{ marginTop: '2rem', textAlign: 'center', color: '#9ca3af' }}>
-                    ¿Ya tienes cuenta? <Link to="/login" style={{ color: 'var(--amarillo-acento)', textDecoration: 'none' }}>Inicia sesión</Link>
-                </div>
-            </div>
-        </div>
+                </label>
+                <button type="submit" className="btn btn-primary btn-block">
+                    Crear cuenta <span className="arrow" aria-hidden="true">→</span>
+                </button>
+            </form>
+        </AuthLayout>
     );
 }
 

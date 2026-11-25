@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '../context/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
-import './LoginPage.css';
+import AuthLayout from '../components/AuthLayout';
 
-function LoginPage() {
+function LoginPage({ products = [] }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -32,113 +32,51 @@ function LoginPage() {
     };
 
     return (
-        <div style={{
-            minHeight: '80vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '2rem'
-        }}>
-            <div style={{
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                padding: '3rem',
-                borderRadius: '16px',
-                width: '100%',
-                maxWidth: '400px',
-                border: '1px solid rgba(255,255,255,0.1)'
-            }}>
-                <h2 style={{
-                    color: 'var(--amarillo-acento)',
-                    textAlign: 'center',
-                    marginBottom: '2rem',
-                    fontSize: '2rem'
-                }}>Iniciar Sesión</h2>
-
-                {error && <div style={{ color: 'var(--rojo-acento)', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
-
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <AuthLayout
+            eyebrow="Bienvenido de vuelta"
+            title="Iniciar sesión"
+            subtitle="Entra para ver tu carrito y pagar más rápido."
+            products={products}
+            footer={<>¿No tienes cuenta? <Link to="/register">Regístrate aquí</Link></>}
+        >
+            <form onSubmit={handleSubmit} className="auth-form">
+                {error && <p className="form-error" role="alert">{error}</p>}
+                <label className="field">
+                    <span className="field-label">Correo electrónico</span>
                     <input
                         type="email"
-                        placeholder="Correo electrónico"
+                        className="field-input"
+                        placeholder="tu@correo.com"
+                        autoComplete="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="login-input"
-                        style={{
-                            padding: '1rem',
-                            borderRadius: '8px',
-                            border: '1px solid white',
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            color: 'white',
-                            fontSize: '1rem'
-                        }}
                         required
                     />
+                </label>
+                <label className="field">
+                    <span className="field-label">Contraseña</span>
                     <input
                         type="password"
-                        placeholder="Contraseña"
+                        className="field-input"
+                        placeholder="••••••••"
+                        autoComplete="current-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="login-input"
-                        style={{
-                            padding: '1rem',
-                            borderRadius: '8px',
-                            border: '1px solid white',
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            color: 'white',
-                            fontSize: '1rem'
-                        }}
                         required
                     />
-                    <button type="submit" style={{
-                        backgroundColor: 'var(--amarillo-acento)',
-                        color: 'var(--negro-texto)',
-                        padding: '1rem',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '1.1rem',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        marginTop: '1rem'
-                    }}>
-                        Entrar
-                    </button>
-                </form>
+                </label>
+                <button type="submit" className="btn btn-primary btn-block">
+                    Entrar <span className="arrow" aria-hidden="true">→</span>
+                </button>
+            </form>
 
-                <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', color: 'rgba(255,255,255,0.5)' }}>
-                        <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
-                        <span>O</span>
-                        <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255,255,255,0.1)' }}></div>
-                    </div>
+            <div className="auth-divider">o</div>
 
-                    <button
-                        onClick={handleGoogleLogin}
-                        type="button"
-                        style={{
-                            backgroundColor: 'white',
-                            color: '#333',
-                            padding: '1rem',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontSize: '1rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.5rem'
-                        }}
-                    >
-                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '20px', height: '20px' }} />
-                        Iniciar sesión con Google
-                    </button>
-                </div>
-
-                <div style={{ marginTop: '2rem', textAlign: 'center', color: '#9ca3af' }}>
-                    ¿No tienes cuenta? <Link to="/register" style={{ color: 'var(--amarillo-acento)', textDecoration: 'none' }}>Regístrate aquí</Link>
-                </div>
-            </div>
-        </div>
+            <button type="button" onClick={handleGoogleLogin} className="btn btn-outline-dark btn-block auth-google">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" />
+                Continuar con Google
+            </button>
+        </AuthLayout>
     );
 }
 

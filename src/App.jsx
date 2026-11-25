@@ -155,8 +155,8 @@ function App() {
         <Route path="/search" element={<SearchPage products={products} addToCart={addToCart} />} />
         <Route path="/nosotros" element={<NosotrosPage />} />
         <Route path="/cart" element={<CartPage cart={cart} updateQuantity={updateQuantity} removeFromCart={removeFromCart} />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/login" element={<LoginPage products={products} />} />
+        <Route path="/register" element={<RegisterPage products={products} />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/checkout" element={<CheckoutPage cart={cart} />} />
       </Routes>
