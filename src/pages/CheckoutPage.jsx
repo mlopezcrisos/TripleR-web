@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { useAuth } from '../context/AuthContext';
+import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useNavigate } from 'react-router-dom';
+import { getCartTotal } from '../utils/cart';
 import './CheckoutPage.css';
 
-// Replace with your actual Stripe Publishable Key
-const stripePromise = loadStripe("pk_test_51Mz...");
+// Cuando exista el backend de pagos:
+// 1. const stripePromise = loadStripe(<publishable key real>) desde '@stripe/stripe-js'.
+// 2. Pedir el clientSecret al backend (create-payment-intent).
+// 3. Envolver <CheckoutForm /> en <Elements stripe={stripePromise}
+//    options={{ clientSecret, appearance: { theme: 'night' } }}>.
 
 function CheckoutForm({ total }) {
     const stripe = useStripe();
@@ -67,33 +69,14 @@ function CheckoutForm({ total }) {
 }
 
 function CheckoutPage({ cart }) {
-    const total = cart.reduce((sum, item) => sum + item.precio * item.quantity, 0);
-    const [clientSecret, setClientSecret] = useState("");
-    const { user } = useAuth();
+    const total = getCartTotal(cart);
     const navigate = useNavigate();
 
     useEffect(() => {
         if (cart.length === 0) {
             navigate('/cart');
         }
-        // Here we would fetch the clientSecret from our backend
-        // fetch("/create-payment-intent", { ... })
-        //   .then(res => res.json())
-        //   .then(data => setClientSecret(data.clientSecret));
-
-        // Mock clientSecret for UI rendering (this won't process real payments without a valid secret)
-        // In a real app, this MUST come from the backend.
-        setClientSecret("pi_mock_secret_for_ui_rendering");
     }, [cart, navigate]);
-
-    const appearance = {
-        theme: 'night',
-        variables: {
-            colorPrimary: '#FBBF24',
-            colorBackground: '#1f2937',
-            colorText: '#f3f4f6',
-        },
-    };
 
     // We need a valid client secret to render PaymentElement. 
     // Since we don't have a backend yet, we'll show a placeholder message or 

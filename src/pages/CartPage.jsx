@@ -1,9 +1,9 @@
-import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getCartTotal, getItemPrice } from '../utils/cart';
 
-function CartPage({ cart, removeFromCart }) {
+function CartPage({ cart, updateQuantity, removeFromCart }) {
     const navigate = useNavigate();
-    const total = cart.reduce((sum, item) => sum + item.precio * item.quantity, 0);
+    const total = getCartTotal(cart);
 
     const handleCheckout = () => {
         navigate('/checkout');
@@ -24,7 +24,7 @@ function CartPage({ cart, removeFromCart }) {
                 <>
                     <div className="cart-items" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {cart.map((item) => (
-                            <div key={item.id} style={{
+                            <div key={item.cartItemId} style={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
@@ -36,7 +36,7 @@ function CartPage({ cart, removeFromCart }) {
                                     <img src={item.imagen} alt={item.nombre} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
                                     <div>
                                         <h3 style={{ margin: '0', fontSize: '1rem' }}>{item.nombre}</h3>
-                                        <p style={{ margin: '0', color: 'var(--amarillo-acento)' }}>${item.precio} x {item.quantity}</p>
+                                        <p style={{ margin: '0', color: 'var(--amarillo-acento)' }}>${getItemPrice(item)} c/u · Subtotal ${getItemPrice(item) * item.quantity}</p>
                                         {item.selectedSize && (
                                             <p style={{ margin: '0', fontSize: '0.8rem', color: '#ccc' }}>Talla: {item.selectedSize}</p>
                                         )}
@@ -45,8 +45,28 @@ function CartPage({ cart, removeFromCart }) {
                                         )}
                                     </div>
                                 </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <button
+                                        onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
+                                        disabled={item.quantity <= 1}
+                                        aria-label={`Quitar uno de ${item.nombre}`}
+                                        style={{ ...qtyButtonStyle, opacity: item.quantity <= 1 ? 0.4 : 1 }}
+                                    >
+                                        −
+                                    </button>
+                                    <span style={{ minWidth: '1.5rem', textAlign: 'center' }}>{item.quantity}</span>
+                                    <button
+                                        onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
+                                        aria-label={`Agregar uno de ${item.nombre}`}
+                                        style={qtyButtonStyle}
+                                    >
+                                        +
+                                    </button>
+                                </div>
                                 <button
-                                    onClick={() => removeFromCart(item.cartItemId || item.id)}
+                                    onClick={() => removeFromCart(item.cartItemId)}
+                                    aria-label={`Eliminar ${item.nombre} del carrito`}
                                     style={{
                                         background: 'none',
                                         border: 'none',
@@ -57,6 +77,7 @@ function CartPage({ cart, removeFromCart }) {
                                 >
                                     &times;
                                 </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -85,5 +106,17 @@ function CartPage({ cart, removeFromCart }) {
         </div>
     );
 }
+
+const qtyButtonStyle = {
+    width: '2rem',
+    height: '2rem',
+    borderRadius: '4px',
+    border: '1px solid rgba(255, 255, 255, 0.4)',
+    background: 'none',
+    color: 'inherit',
+    cursor: 'pointer',
+    fontSize: '1.1rem',
+    lineHeight: 1
+};
 
 export default CartPage;
