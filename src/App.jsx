@@ -1,6 +1,6 @@
 // En: src/App.jsx
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
@@ -15,7 +15,12 @@ import CartPage from './pages/CartPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CheckoutPage from './pages/CheckoutPage';
-import AdminPage from './pages/AdminPage';
+// Páginas que casi nadie abre: se descargan solo cuando se visitan.
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const TerminosPage = lazy(() => import('./pages/legal/TerminosPage'));
+const PrivacidadPage = lazy(() => import('./pages/legal/PrivacidadPage'));
+const EnviosPage = lazy(() => import('./pages/legal/EnviosPage'));
+const DevolucionesPage = lazy(() => import('./pages/legal/DevolucionesPage'));
 import { useCatalog } from './hooks/useCatalog';
 import { useAuth } from './context/AuthContext';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
@@ -82,6 +87,7 @@ function App() {
   return (
     <div>
       <Navbar cart={cart} />
+      <Suspense fallback={null}>
       <Routes>
         <Route path="/" element={<HomePage artists={artistsWithProducts} />} />
         <Route path="/product/:productId" element={<ProductDetailPage products={products} loading={catalogLoading} cart={cart} addToCart={addToCart} />} />
@@ -93,7 +99,12 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/checkout" element={<CheckoutPage cart={cart} />} />
+        <Route path="/terminos" element={<TerminosPage />} />
+        <Route path="/privacidad" element={<PrivacidadPage />} />
+        <Route path="/envios" element={<EnviosPage />} />
+        <Route path="/devoluciones" element={<DevolucionesPage />} />
       </Routes>
+      </Suspense>
       <Footer />
     </div>
   );

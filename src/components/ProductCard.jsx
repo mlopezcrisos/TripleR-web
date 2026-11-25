@@ -12,7 +12,7 @@ function ProductCard(props) {
   return (
     <Link to={`/product/${id}`} className="card-link">
       <div className="card">
-        <img src={imagen} alt={nombre} />
+        <img src={imagen} alt={nombre} loading="lazy" decoding="async" />
         <h3>{nombre}</h3>
         <p className="price">${precio}</p>
         {product.stock && totalStock(product) === 0 && <p className="sold-out-badge">Agotado</p>}

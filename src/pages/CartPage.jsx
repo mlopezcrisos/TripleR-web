@@ -33,7 +33,7 @@ function CartPage({ cart, removeFromCart }) {
                                 borderRadius: '8px'
                             }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <img src={item.imagen} alt={item.nombre} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
+                                    <img src={item.imagen} alt={item.nombre} loading="lazy" decoding="async" style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px' }} />
                                     <div>
                                         <h3 style={{ margin: '0', fontSize: '1rem' }}>{item.nombre}</h3>
                                         <p style={{ margin: '0', color: 'var(--amarillo-acento)' }}>${item.precio} x {item.quantity}</p>
