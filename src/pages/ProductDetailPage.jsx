@@ -14,12 +14,14 @@ function ProductDetailPage({ products, addToCart }) {
     return <h2>Producto no encontrado</h2>;
   }
 
-  // Opciones de corte. priceMod es lo que se suma al precio base.
-  // TODO: poner el costo extra real de la hoodie (hoy está en 0).
+  // Opciones de corte. `price` es el precio final con esa opción
+  // (sin `price` se usa el precio base del producto).
   const cutOptions = [
-    { id: 'oversize', label: 'CORTE OVERSIZE', priceMod: 0 },
-    { id: 'hoodie', label: 'HACER HOODIE', priceMod: 0 }
+    { id: 'oversize', label: 'CORTE OVERSIZE' },
+    { id: 'hoodie', label: 'HACER HOODIE', price: 400 }
   ];
+
+  const priceFor = (cutId) => cutOptions.find(c => c.id === cutId)?.price ?? product.precio;
 
   const handleAddToCart = () => {
     if (!selectedSize) {
@@ -31,7 +33,7 @@ function ProductDetailPage({ products, addToCart }) {
       ...product,
       selectedSize,
       selectedCut,
-      price: product.precio + (cutOptions.find(c => c.id === selectedCut)?.priceMod || 0)
+      price: priceFor(selectedCut)
     };
 
     addToCart(itemToAdd, quantity);
@@ -40,7 +42,7 @@ function ProductDetailPage({ products, addToCart }) {
   const incrementQuantity = () => setQuantity(q => q + 1);
   const decrementQuantity = () => setQuantity(q => (q > 1 ? q - 1 : 1));
 
-  const currentPrice = product.precio + (cutOptions.find(c => c.id === selectedCut)?.priceMod || 0);
+  const currentPrice = priceFor(selectedCut);
 
   return (
     <div className="product-detail-container">
@@ -79,7 +81,7 @@ function ProductDetailPage({ products, addToCart }) {
                   onClick={() => setSelectedCut(selectedCut === cut.id ? 'regular' : cut.id)}
                 >
                   <span className="cut-label">{cut.label}</span>
-                  {cut.priceMod > 0 && <span className="cut-price">+${cut.priceMod}</span>}
+                  {cut.price > product.precio && <span className="cut-price">${cut.price}</span>}
                 </div>
               ))}
             </div>
