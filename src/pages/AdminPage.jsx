@@ -315,6 +315,13 @@ function OrdersAdmin() {
               </li>
             ))}
           </ul>
+          {o.sobreventa?.length > 0 && (
+            <p className="admin-error">
+              Sobreventa: no alcanzó el stock para{' '}
+              {o.sobreventa.map(x => (typeof x === 'string' ? x : [x.nombre || x.productId, x.selectedSize].filter(Boolean).join(' '))).join(', ')}
+            </p>
+          )}
+          {o.cancelReason && <p className="admin-hint">Motivo de cancelación: {o.cancelReason}</p>}
           {o.shipping && (
             <p className="admin-hint">
               {[o.shipping.name, o.shipping.address, o.shipping.city, o.shipping.state, o.shipping.zip, o.shipping.phone]
