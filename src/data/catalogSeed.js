@@ -11,13 +11,13 @@ export const ONE_SIZE = 'UNICA';
 const tallas = (n = 10) => Object.fromEntries(SIZES.map(s => [s, n]));
 
 export const seedProducts = [
-  { id: '1', nombre: 'Playera Nsqk', precio: 200, imagen: 'playera_nsqk.png', descripcion: 'Playera de algodón peinado', artist: 'nsqk', tipo: 'playera', stock: tallas(), activo: true, orden: 1 },
+  { id: '1', nombre: 'Playera Nsqk', precio: 200, imagen: 'playera_nsqk.png', descripcion: 'Playera de algodón peinado', artist: 'nsqk', tipo: 'playera', precioHoodie: 400, stock: tallas(), activo: true, orden: 1 },
   { id: '2', nombre: "Bolsa de manta Nsqk'", precio: 150, imagen: 'bolsa_nsqk.png', descripcion: 'Tote bag de manta cruda 40x40', artist: 'nsqk', tipo: 'bolsa', stock: { [ONE_SIZE]: 10 }, activo: true, orden: 2 },
-  { id: '3', nombre: 'Siento que merezco más - Latin Mafia', precio: 250, imagen: 'playera_latin_mafia_1.jpg', descripcion: 'Playera oficial Latin Mafia', artist: 'latin-mafia', tipo: 'playera', stock: tallas(), activo: true, orden: 3 },
-  { id: '4', nombre: 'Te odio y te extraño mucho - Latin Mafia', precio: 250, imagen: 'playera_latin_mafia_2.jpg', descripcion: 'Playera oficial Latin Mafia', artist: 'latin-mafia', tipo: 'playera', stock: tallas(), activo: true, orden: 4 },
-  { id: '5', nombre: 'Rels B', precio: 250, imagen: 'playera_rels_b.jpg', descripcion: 'Playera oficial Rels B', artist: 'rels-b', tipo: 'playera', stock: tallas(), activo: true, orden: 5 },
-  { id: '6', nombre: 'Do you think about me - NSQK', precio: 250, imagen: 'playera_nsqk_dythm.jpg', descripcion: 'Playera oficial NSQK', artist: 'nsqk', tipo: 'playera', stock: tallas(), activo: true, orden: 6 },
-  { id: '7', nombre: '¿Has pensado en ese hombre? - NSQK', precio: 250, imagen: 'playera_nsqk_hp.jpg', descripcion: 'Playera oficial NSQK', artist: 'nsqk', tipo: 'playera', stock: tallas(), activo: true, orden: 7 },
+  { id: '3', nombre: 'Siento que merezco más - Latin Mafia', precio: 250, imagen: 'playera_latin_mafia_1.jpg', descripcion: 'Playera oficial Latin Mafia', artist: 'latin-mafia', tipo: 'playera', precioHoodie: 400, stock: tallas(), activo: true, orden: 3 },
+  { id: '4', nombre: 'Te odio y te extraño mucho - Latin Mafia', precio: 250, imagen: 'playera_latin_mafia_2.jpg', descripcion: 'Playera oficial Latin Mafia', artist: 'latin-mafia', tipo: 'playera', precioHoodie: 400, stock: tallas(), activo: true, orden: 4 },
+  { id: '5', nombre: 'Rels B', precio: 250, imagen: 'playera_rels_b.jpg', descripcion: 'Playera oficial Rels B', artist: 'rels-b', tipo: 'playera', precioHoodie: 400, stock: tallas(), activo: true, orden: 5 },
+  { id: '6', nombre: 'Do you think about me - NSQK', precio: 250, imagen: 'playera_nsqk_dythm.jpg', descripcion: 'Playera oficial NSQK', artist: 'nsqk', tipo: 'playera', precioHoodie: 400, stock: tallas(), activo: true, orden: 6 },
+  { id: '7', nombre: '¿Has pensado en ese hombre? - NSQK', precio: 250, imagen: 'playera_nsqk_hp.jpg', descripcion: 'Playera oficial NSQK', artist: 'nsqk', tipo: 'playera', precioHoodie: 400, stock: tallas(), activo: true, orden: 7 },
 ];
 
 export const seedArtists = [
@@ -34,6 +34,17 @@ export function sizesOf(product) {
   const keys = Object.keys(product?.stock || {});
   if (keys.includes(ONE_SIZE) || product?.tipo === 'bolsa') return [ONE_SIZE];
   return SIZES.filter(s => keys.includes(s));
+}
+
+// Precio de la hoodie: total fijo, no un extra sobre la playera.
+export const DEFAULT_HOODIE_PRICE = 400;
+
+// Precio final de una pieza según el corte elegido.
+export function priceFor(product, cut = 'regular') {
+  if (cut === 'hoodie' && (product?.tipo || 'playera') === 'playera') {
+    return Number(product?.precioHoodie) || DEFAULT_HOODIE_PRICE;
+  }
+  return Number(product?.precio) || 0;
 }
 
 export function stockOf(product, size) {

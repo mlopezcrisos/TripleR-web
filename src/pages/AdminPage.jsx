@@ -9,7 +9,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
-import { seedArtists, seedProducts, SIZES, ONE_SIZE, sizesOf, totalStock } from '../data/catalogSeed';
+import { seedArtists, seedProducts, SIZES, ONE_SIZE, DEFAULT_HOODIE_PRICE, sizesOf, totalStock } from '../data/catalogSeed';
 import { assetNames, resolveImage } from '../data/images';
 import './AdminPage.css';
 
@@ -149,6 +149,9 @@ function ProductRow({ product, artists }) {
       await updateDoc(doc(db, 'products', product.id), {
         nombre: draft.nombre.trim(),
         precio: Number(draft.precio) || 0,
+        ...((draft.tipo || 'playera') === 'playera'
+          ? { precioHoodie: Number(draft.precioHoodie) || DEFAULT_HOODIE_PRICE }
+          : {}),
         descripcion: draft.descripcion || '',
         artist: draft.artist,
         imagen: draft.imagen,
@@ -172,6 +175,9 @@ function ProductRow({ product, artists }) {
         <div className="admin-row">
           <input className="grow" value={draft.nombre} onChange={e => edit({ nombre: e.target.value })} aria-label="Nombre" />
           <label>$ <input type="number" min="0" value={draft.precio} onChange={e => edit({ precio: e.target.value })} className="narrow" aria-label="Precio" /></label>
+          {(draft.tipo || 'playera') === 'playera' && (
+            <label>Hoodie $ <input type="number" min="0" value={draft.precioHoodie ?? DEFAULT_HOODIE_PRICE} onChange={e => edit({ precioHoodie: e.target.value })} className="narrow" aria-label="Precio hoodie" /></label>
+          )}
           <select value={draft.artist} onChange={e => edit({ artist: e.target.value })} aria-label="Artista">
             {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
@@ -220,6 +226,7 @@ function NewProductForm({ artists, nextOrder }) {
         ...form,
         nombre: form.nombre.trim(),
         precio: Number(form.precio) || 0,
+        ...(form.tipo === 'playera' ? { precioHoodie: DEFAULT_HOODIE_PRICE } : {}),
         stock: Object.fromEntries(sizes.map(s => [s, Number(stock[s]) || 0])),
         activo: true,
         orden: nextOrder,

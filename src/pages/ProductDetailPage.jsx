@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
 import './ProductDetailPage.css';
-import { sizesOf, stockOf, ONE_SIZE } from '../data/catalogSeed';
+import { sizesOf, stockOf, priceFor, ONE_SIZE } from '../data/catalogSeed';
 
 function ProductDetailPage({ products, loading, cart = [], addToCart }) {
   const { productId } = useParams();
@@ -31,7 +31,7 @@ function ProductDetailPage({ products, loading, cart = [], addToCart }) {
   // Hardcoded options
   const cutOptions = [
     { id: 'oversize', label: 'CORTE OVERSIZE', priceMod: 0 },
-    { id: 'hoodie', label: 'HACER HOODIE', priceMod: 0 }
+    { id: 'hoodie', label: 'HACER HOODIE', priceMod: priceFor(product, 'hoodie') - product.precio }
   ];
 
   const handleAddToCart = () => {
@@ -53,7 +53,10 @@ function ProductDetailPage({ products, loading, cart = [], addToCart }) {
       ...productData,
       selectedSize: size,
       selectedCut: isShirt ? selectedCut : 'regular',
-      price: product.precio + (cutOptions.find(c => c.id === selectedCut)?.priceMod || 0)
+      // Precio final de la pieza (la hoodie tiene precio propio). CartPage suma `precio`.
+      precioBase: product.precio,
+      precio: priceFor(product, isShirt ? selectedCut : 'regular'),
+      price: priceFor(product, isShirt ? selectedCut : 'regular'),
     };
 
     // Add quantity times
@@ -65,7 +68,7 @@ function ProductDetailPage({ products, loading, cart = [], addToCart }) {
   const incrementQuantity = () => setQuantity(q => (q < maxQty ? q + 1 : q));
   const decrementQuantity = () => setQuantity(q => (q > 1 ? q - 1 : 1));
 
-  const currentPrice = product.precio + (cutOptions.find(c => c.id === selectedCut)?.priceMod || 0);
+  const currentPrice = priceFor(product, isShirt ? selectedCut : 'regular');
 
   return (
     <div className="product-detail-container">
