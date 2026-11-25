@@ -59,10 +59,7 @@ function ProductDetailPage({ products, loading, cart = [], addToCart }) {
       price: priceFor(product, isShirt ? selectedCut : 'regular'),
     };
 
-    // Add quantity times
-    for (let i = 0; i < quantity; i++) {
-      addToCart(itemToAdd);
-    }
+    addToCart(itemToAdd, quantity);
   };
 
   const incrementQuantity = () => setQuantity(q => (q < maxQty ? q + 1 : q));

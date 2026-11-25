@@ -8,7 +8,7 @@ import {
   addDoc, collection, doc, getDoc, onSnapshot, serverTimestamp, updateDoc, writeBatch,
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { seedArtists, seedProducts, SIZES, ONE_SIZE, DEFAULT_HOODIE_PRICE, sizesOf, totalStock } from '../data/catalogSeed';
 import { assetNames, resolveImage } from '../data/images';
 import './AdminPage.css';

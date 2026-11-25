@@ -12,14 +12,18 @@ function LegalPage({ title, children }) {
 
   return (
     <main className="legal-page">
-      <h1>{title}</h1>
-      <p className="legal-updated">Última actualización: {LEGAL.actualizado}</p>
-      <div className="legal-body">{children}</div>
-      <nav className="legal-nav" aria-label="Políticas">
-        {LEGAL_PAGES.filter(p => p.title !== title).map(p => (
-          <Link key={p.path} to={p.path}>{p.title}</Link>
-        ))}
-      </nav>
+      <header className="page-head legal-head">
+        <p className="eyebrow">Ayuda · Actualizado el {LEGAL.actualizado}</p>
+        <h1 className="page-title">{title}</h1>
+      </header>
+      <div className="legal-wrap">
+        <article className="legal-body sticker-card">{children}</article>
+        <nav className="legal-nav" aria-label="Políticas">
+          {LEGAL_PAGES.filter(p => p.title !== title).map(p => (
+            <Link key={p.path} to={p.path}>{p.title} <span aria-hidden="true">→</span></Link>
+          ))}
+        </nav>
+      </div>
     </main>
   );
 }

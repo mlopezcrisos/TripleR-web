@@ -1,7 +1,7 @@
 // En: src/App.jsx
 
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/ProductDetailPage';
@@ -15,16 +15,27 @@ import CartPage from './pages/CartPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CheckoutPage from './pages/CheckoutPage';
+import { useCatalog } from './hooks/useCatalog';
+import { useAuth } from './context/useAuth';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from './firebase/config';
+import {
+  CART_OWNER_KEY,
+  CART_STORAGE_KEY,
+  getCartItemId,
+  getItemPrice,
+  loadLocalCart,
+  mergeCarts,
+  normalizeCart,
+  sameCart,
+} from './utils/cart';
+
 // Páginas que casi nadie abre: se descargan solo cuando se visitan.
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const TerminosPage = lazy(() => import('./pages/legal/TerminosPage'));
 const PrivacidadPage = lazy(() => import('./pages/legal/PrivacidadPage'));
 const EnviosPage = lazy(() => import('./pages/legal/EnviosPage'));
 const DevolucionesPage = lazy(() => import('./pages/legal/DevolucionesPage'));
-import { useCatalog } from './hooks/useCatalog';
-import { useAuth } from './context/AuthContext';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
-import { db } from './firebase/config';
 
 function App() {
   const { products, artists, loading: catalogLoading } = useCatalog();
@@ -32,52 +43,108 @@ function App() {
   const artistsWithProducts = artists.filter(a => products.some(p => p.artist === a.id));
 
   const { user } = useAuth();
-  const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
+  const [cart, setCart] = useState(loadLocalCart);
+  // uid cuyo carrito de Firestore ya se fusionó con el local. Hasta entonces
+  // no escribimos en Firestore, para no pisar el carrito guardado.
+  const [syncedUid, setSyncedUid] = useState(null);
+  // Aviso breve al agregar al carrito (reemplaza el alert del navegador).
+  const [toast, setToast] = useState(null);
 
-  // Sync cart with Firestore when user logs in
   useEffect(() => {
-    if (user) {
-      const docRef = doc(db, "carts", user.uid);
-      const unsubscribe = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-          setCart(docSnap.data().items || []);
-        }
-      });
-      return () => unsubscribe();
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  // Al iniciar sesión: fusiona el carrito de invitado con el de Firestore y
+  // escucha cambios hechos desde otros dispositivos.
+  // Al cerrar sesión: vacía el carrito local para que no quede a la vista
+  // del siguiente invitado ni se vuelva a sumar en el próximo login.
+  useEffect(() => {
+    if (!user) {
+      setSyncedUid(null);
+      if (localStorage.getItem(CART_OWNER_KEY)) {
+        localStorage.removeItem(CART_OWNER_KEY);
+        setCart([]);
+      }
+      return;
     }
+
+    const docRef = doc(db, "carts", user.uid);
+    let cancelled = false;
+    let unsubscribe = () => {};
+
+    (async () => {
+      try {
+        const snap = await getDoc(docRef);
+        if (cancelled) return;
+
+        const remote = snap.exists() ? normalizeCart(snap.data().items) : null;
+        // Si el carrito local ya era de este usuario (p. ej. recargó la
+        // página), Firestore es la fuente de verdad. Si era de invitado,
+        // se suman ambos.
+        const localIsTheirs = localStorage.getItem(CART_OWNER_KEY) === user.uid;
+        setCart(local => {
+          if (!remote) return local;
+          return localIsTheirs ? remote : mergeCarts(remote, local);
+        });
+        localStorage.setItem(CART_OWNER_KEY, user.uid);
+        setSyncedUid(user.uid);
+
+        unsubscribe = onSnapshot(docRef, (docSnap) => {
+          // Ignora el eco de nuestras propias escrituras.
+          if (docSnap.metadata.hasPendingWrites || !docSnap.exists()) return;
+          const items = normalizeCart(docSnap.data().items);
+          setCart(prev => (sameCart(prev, items) ? prev : items));
+        });
+      } catch (error) {
+        console.error("No se pudo sincronizar el carrito con Firestore:", error);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [user]);
 
-  // Save cart to localStorage (always) and Firestore (if logged in)
+  // Guarda el carrito en localStorage (siempre) y en Firestore (si hay sesión
+  // y ya se hizo la fusión).
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
 
-    if (user) {
+    if (user && syncedUid === user.uid) {
       const docRef = doc(db, "carts", user.uid);
-      setDoc(docRef, { items: cart }, { merge: true });
+      setDoc(docRef, { items: cart }, { merge: true }).catch(error => {
+        console.error("No se pudo guardar el carrito en Firestore:", error);
+      });
     }
-  }, [cart, user]);
+  }, [cart, user, syncedUid]);
 
-  const addToCart = (product) => {
+  const addToCart = (product, quantity = 1) => {
+    const cartItemId = getCartItemId(product);
     setCart(prevCart => {
-      // Create a unique ID for the cart item based on product ID and selected options
-      const cartItemId = `${product.id}-${product.selectedSize || 'default'}-${product.selectedCut || 'default'}`;
-
       const existingItem = prevCart.find(item => item.cartItemId === cartItemId);
 
       if (existingItem) {
         return prevCart.map(item =>
-          item.cartItemId === cartItemId ? { ...item, quantity: item.quantity + 1 } : item
+          item.cartItemId === cartItemId ? { ...item, quantity: item.quantity + quantity } : item
         );
       }
 
-      // If it's a new item configuration, add it with the unique cartItemId
-      // Note: We already receive 'price' calculated from the detail page, but we should ensure it persists
-      return [...prevCart, { ...product, cartItemId, quantity: 1 }];
+      return [...prevCart, { ...product, price: getItemPrice(product), cartItemId, quantity }];
     });
-    alert("¡Producto agregado al carrito!");
+    setToast({
+      id: Date.now(),
+      text: quantity > 1 ? `${quantity} piezas agregadas al carrito` : 'Agregado al carrito',
+    });
+  };
+
+  const updateQuantity = (cartItemId, quantity) => {
+    if (quantity < 1) return;
+    setCart(prevCart => prevCart.map(item =>
+      item.cartItemId === cartItemId ? { ...item, quantity } : item
+    ));
   };
 
   const removeFromCart = (cartItemId) => {
@@ -89,14 +156,14 @@ function App() {
       <Navbar cart={cart} />
       <Suspense fallback={null}>
       <Routes>
-        <Route path="/" element={<HomePage artists={artistsWithProducts} />} />
+        <Route path="/" element={<HomePage artists={artistsWithProducts} products={products} />} />
         <Route path="/product/:productId" element={<ProductDetailPage products={products} loading={catalogLoading} cart={cart} addToCart={addToCart} />} />
         <Route path="/artist/:artistId" element={<ArtistPage products={products} artists={artists} addToCart={addToCart} />} />
         <Route path="/search" element={<SearchPage products={products} addToCart={addToCart} />} />
         <Route path="/nosotros" element={<NosotrosPage />} />
-        <Route path="/cart" element={<CartPage cart={cart} removeFromCart={removeFromCart} />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/cart" element={<CartPage cart={cart} updateQuantity={updateQuantity} removeFromCart={removeFromCart} />} />
+        <Route path="/login" element={<LoginPage products={products} />} />
+        <Route path="/register" element={<RegisterPage products={products} />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/checkout" element={<CheckoutPage cart={cart} />} />
         <Route path="/terminos" element={<TerminosPage />} />
@@ -106,6 +173,13 @@ function App() {
       </Routes>
       </Suspense>
       <Footer />
+      {toast && (
+        <div className="toast" role="status" key={toast.id}>
+          <span className="toast-check" aria-hidden="true">✓</span>
+          <p className="toast-text">{toast.text}</p>
+          <Link to="/cart" className="toast-link" onClick={() => setToast(null)}>Ver carrito</Link>
+        </div>
+      )}
     </div>
   );
 }

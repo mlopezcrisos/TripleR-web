@@ -2,7 +2,7 @@ import './Navbar.css';
 import logo from '../assets/logo-horizontal.webp';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 function Navbar({ cart }) {
   const totalItems = cart ? cart.reduce((sum, item) => sum + item.quantity, 0) : 0;

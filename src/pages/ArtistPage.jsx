@@ -1,5 +1,6 @@
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
+import './ArtistPage.css';
 
 function ArtistPage({ products, artists = [], addToCart }) {
     const { artistId } = useParams();
@@ -7,27 +8,39 @@ function ArtistPage({ products, artists = [], addToCart }) {
     // Filter products by the artistId from the URL
     const artistProducts = products.filter(product => product.artist === artistId);
 
-    const artistName = artists.find(a => a.id === artistId)?.name || 'Artista';
+    const artist = artists.find(a => a.id === artistId);
+    const artistName = artist?.name || 'Artista';
 
     return (
         <div className="artist-page">
-            <h2 style={{ textAlign: 'center', margin: '2rem 0', color: 'var(--crema-fondo)', fontSize: '2.5rem' }}>
-                {artistName}
-            </h2>
+            <header className="artist-hero">
+                {artist?.image && <img src={artist.image} alt="" className="artist-hero-bg" />}
+                <div className="artist-hero-inner">
+                    <Link to="/" className="artist-back">← Todos los artistas</Link>
+                    <p className="eyebrow">Merch oficial</p>
+                    <h1 className="artist-hero-title">{artistName}</h1>
+                    <p className="artist-hero-meta">
+                        {artistProducts.length} {artistProducts.length === 1 ? 'producto' : 'productos'}
+                    </p>
+                </div>
+            </header>
 
-            {artistProducts.length > 0 ? (
-                <main className="product-grid">
-                    {artistProducts.map(product => (
-                        <ProductCard
-                            key={product.id}
-                            product={product}
-                            addToCart={addToCart}
-                        />
-                    ))}
-                </main>
-            ) : (
-                <p style={{ textAlign: 'center', color: 'var(--crema-fondo)' }}>No hay productos disponibles para este artista.</p>
-            )}
+            <section className="section artist-products">
+                {artistProducts.length > 0 ? (
+                    <main className="product-grid">
+                        {artistProducts.map(product => (
+                            <ProductCard
+                                key={product.id}
+                                product={product}
+                                artistName={artistName}
+                                addToCart={addToCart}
+                            />
+                        ))}
+                    </main>
+                ) : (
+                    <p className="artist-empty">No hay productos disponibles para este artista.</p>
+                )}
+            </section>
         </div>
     );
 }

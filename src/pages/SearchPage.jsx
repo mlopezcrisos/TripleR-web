@@ -17,9 +17,10 @@ function SearchPage({ products, addToCart }) {
     console.log('Filtered Products:', filteredProducts);
 
     return (
-        <div className="search-page">
-            <h2 style={{ textAlign: 'center', margin: '2rem 0', color: 'var(--crema-fondo)', fontSize: '2.5rem' }}>
-                Resultados para: "{query}"
+        <div className="search-page section">
+            <p className="eyebrow">Búsqueda</p>
+            <h2 className="section-title" style={{ margin: '0.35rem 0 2rem' }}>
+                Resultados para "{query}"
             </h2>
 
             {filteredProducts.length > 0 ? (
