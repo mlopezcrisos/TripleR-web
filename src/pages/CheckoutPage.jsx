@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { functions } from '../firebase/config';
+import { getCartTotal } from '../utils/cart';
 import './CheckoutPage.css';
 
 const createCheckoutSession = httpsCallable(functions, 'createCheckoutSession');
 
 const SHIPPING_STORAGE_KEY = 'shipping';
+
+// Los pagos se activan cuando las Cloud Functions estén desplegadas
+// (VITE_PAYMENTS_ENABLED=true en Vercel). En local, con el emulador, siempre.
+const PAYMENTS_ENABLED =
+    import.meta.env.VITE_PAYMENTS_ENABLED === 'true' ||
+    import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === 'true';
 
 const emptyShipping = {
     nombre: '',
@@ -28,7 +35,7 @@ function loadSavedShipping() {
 }
 
 function CheckoutPage({ cart }) {
-    const total = cart.reduce((sum, item) => sum + item.precio * item.quantity, 0);
+    const total = getCartTotal(cart);
     const { user } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -58,6 +65,7 @@ function CheckoutPage({ cart }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!PAYMENTS_ENABLED) return;
         setError(null);
         setIsLoading(true);
 
@@ -124,12 +132,14 @@ function CheckoutPage({ cart }) {
                     </div>
 
                     <p style={{ color: '#e5e7eb', fontSize: '0.9rem', lineHeight: 1.5 }}>
-                        Al dar clic en pagar te llevaremos a la página segura de Stripe para ingresar tu tarjeta.
+                        {PAYMENTS_ENABLED
+                            ? 'Al dar clic en pagar te llevaremos a la página segura de Stripe para ingresar tu tarjeta.'
+                            : 'Muy pronto podrás pagar en línea. Estamos terminando de activar los pagos.'}
                     </p>
 
                     <button
                         type="submit"
-                        disabled={isLoading}
+                        disabled={isLoading || !PAYMENTS_ENABLED}
                         style={{
                             backgroundColor: 'var(--amarillo-acento)',
                             color: 'var(--negro-texto)',
@@ -138,13 +148,13 @@ function CheckoutPage({ cart }) {
                             borderRadius: '8px',
                             fontSize: '1.1rem',
                             fontWeight: 'bold',
-                            cursor: isLoading ? 'wait' : 'pointer',
+                            cursor: !PAYMENTS_ENABLED ? 'not-allowed' : isLoading ? 'wait' : 'pointer',
                             marginTop: '1.5rem',
                             width: '100%',
-                            opacity: isLoading ? 0.7 : 1
+                            opacity: isLoading || !PAYMENTS_ENABLED ? 0.6 : 1
                         }}
                     >
-                        {isLoading ? 'Redirigiendo a Stripe...' : `Pagar $${total}`}
+                        {!PAYMENTS_ENABLED ? 'Pagos próximamente' : isLoading ? 'Redirigiendo a Stripe...' : `Pagar $${total}`}
                     </button>
 
                     {error && (

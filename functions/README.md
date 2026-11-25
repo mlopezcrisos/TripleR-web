@@ -60,7 +60,12 @@ Cloud Functions no funcionan en el plan gratuito Spark) y tener instalado
    firebase deploy --only functions
    ```
 
-6. Prueba con la tarjeta `4242 4242 4242 4242`, cualquier fecha futura y
+6. En Vercel (Settings → Environment Variables) agrega
+   `VITE_PAYMENTS_ENABLED=true` y vuelve a desplegar. Mientras no exista,
+   el botón de pago muestra "Pagos próximamente" para que la tienda en vivo
+   no intente llamar a funciones que todavía no están desplegadas.
+
+7. Prueba con la tarjeta `4242 4242 4242 4242`, cualquier fecha futura y
    cualquier CVC. El pedido debe aparecer en Firestore con `status: "pagado"`.
 
 Para pasar a cobros reales, repite los pasos 2 y 5 con las claves `sk_live_`

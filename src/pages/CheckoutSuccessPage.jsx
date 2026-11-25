@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 // Página a la que Stripe regresa al cliente después de pagar.
 // El pedido lo marca como pagado el webhook de Stripe (no esta página).
