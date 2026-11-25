@@ -1,7 +1,7 @@
 // En: src/App.jsx
 
 import { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/ProductDetailPage';
@@ -41,6 +41,14 @@ function App() {
   // uid cuyo carrito de Firestore ya se fusionó con el local. Hasta entonces
   // no escribimos en Firestore, para no pisar el carrito guardado.
   const [syncedUid, setSyncedUid] = useState(null);
+  // Aviso breve al agregar al carrito (reemplaza el alert del navegador).
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // Al iniciar sesión: fusiona el carrito de invitado con el de Firestore y
   // escucha cambios hechos desde otros dispositivos.
@@ -120,9 +128,10 @@ function App() {
 
       return [...prevCart, { ...product, price: getItemPrice(product), cartItemId, quantity }];
     });
-    alert(quantity > 1
-      ? `¡${quantity} productos agregados al carrito!`
-      : "¡Producto agregado al carrito!");
+    setToast({
+      id: Date.now(),
+      text: quantity > 1 ? `${quantity} piezas agregadas al carrito` : 'Agregado al carrito',
+    });
   };
 
   const updateQuantity = (cartItemId, quantity) => {
@@ -140,7 +149,7 @@ function App() {
     <div>
       <Navbar cart={cart} />
       <Routes>
-        <Route path="/" element={<HomePage artists={artistsWithProducts} />} />
+        <Route path="/" element={<HomePage artists={artistsWithProducts} products={products} />} />
         <Route path="/product/:productId" element={<ProductDetailPage products={products} loading={catalogLoading} cart={cart} addToCart={addToCart} />} />
         <Route path="/artist/:artistId" element={<ArtistPage products={products} artists={artists} addToCart={addToCart} />} />
         <Route path="/search" element={<SearchPage products={products} addToCart={addToCart} />} />
@@ -152,6 +161,13 @@ function App() {
         <Route path="/checkout" element={<CheckoutPage cart={cart} />} />
       </Routes>
       <Footer />
+      {toast && (
+        <div className="toast" role="status" key={toast.id}>
+          <span className="toast-check" aria-hidden="true">✓</span>
+          <p className="toast-text">{toast.text}</p>
+          <Link to="/cart" className="toast-link" onClick={() => setToast(null)}>Ver carrito</Link>
+        </div>
+      )}
     </div>
   );
 }

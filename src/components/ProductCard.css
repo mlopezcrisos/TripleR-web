@@ -1,48 +1,130 @@
 /* En: src/components/ProductCard.css */
 
 .card-link {
-  text-decoration: none;
+  display: block;
   color: var(--crema-fondo);
+  text-decoration: none;
 }
 
 .card {
-  width: 100%;
-  max-width: 300px;
-  /* Limitamos el ancho máximo */
   text-align: left;
-  margin: 0 auto;
-  /* Centramos la tarjeta si es más pequeña que el contenedor */
 }
 
-.card img {
+.card-media {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--crema-fondo);
+}
+
+.card-media img {
   width: 100%;
-  aspect-ratio: 3/4;
+  height: 100%;
   object-fit: cover;
   display: block;
-  margin-bottom: 1rem;
-  border-radius: 8px;
+  transition: transform 0.7s var(--ease-out);
 }
 
-.card h3 {
-  margin: 0 0 0.25rem 0;
-  font-size: 1.3rem;
+.card-link:hover .card-media img {
+  transform: scale(1.05);
+}
+
+.card-badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.35rem 0.6rem;
+  border-radius: 4px;
+  background: var(--negro-texto);
+  color: var(--crema-fondo);
+  font-stretch: 75%;
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.card-badge-sold {
+  background: var(--rojo-acento);
+}
+
+.card-view {
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--amarillo-acento);
+  color: var(--negro-texto);
+  font-stretch: 85%;
+  font-weight: 800;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.3s, transform 0.35s var(--ease-out);
+}
+
+.card-link:hover .card-view,
+.card-link:focus-visible .card-view {
+  opacity: 1;
+  transform: none;
+}
+
+.card-body {
+  padding: 0.9rem 0.1rem 0;
+}
+
+.card-artist {
+  margin-bottom: 0.3rem;
+}
+
+.card-title {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.3;
+  letter-spacing: 0;
 }
 
 .card .price {
   margin: 0;
-  font-size: 1.5rem;
+  font-weight: 800;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
   color: var(--amarillo-acento);
-  font-weight: bold;
 }
 
-/* Ocultamos el botón para un look más limpio */
-.card button {
-  display: none;
+.price-currency {
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--crema-tenue);
 }
-.sold-out-badge {
-  margin: 0.25rem 0 0;
-  font-weight: bold;
-  text-transform: uppercase;
-  color: var(--rojo-acento);
+
+.is-sold-out .card-media img {
+  filter: grayscale(0.7);
+  opacity: 0.75;
+}
+
+@media (hover: none) {
+  .card-view {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .card-badge {
+    font-size: 0.62rem;
+    top: 0.5rem;
+    left: 0.5rem;
+  }
+
+  .card-title {
+    font-size: 0.9rem;
+  }
 }
