@@ -66,20 +66,37 @@ Cloud Functions no funcionan en el plan gratuito Spark) y tener instalado
 Para pasar a cobros reales, repite los pasos 2 y 5 con las claves `sk_live_`
 y un webhook en modo live.
 
-## Probar en local
+## Probar en local (sin plan Blaze y sin cobrar)
 
-```bash
-# functions/.secret.local (no se sube a git)
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...   # el que imprime `stripe listen`
+Requisitos: Node 22, Java 11 o más reciente (lo pide el emulador de
+Firestore), `firebase-tools` y la [Stripe CLI](https://docs.stripe.com/stripe-cli).
 
-firebase emulators:start --only functions,firestore
-stripe listen --forward-to http://127.0.0.1:5001/tripler-fb8ef/us-central1/stripeWebhook
-```
+1. Crea `functions/.secret.local` (git no lo sube) con tu clave de prueba:
 
-Nota: la app web apunta a las funciones desplegadas. Para usar el emulador
-desde la app hay que llamar a `connectFunctionsEmulator` en
-`src/firebase/config.js`.
+   ```
+   STRIPE_SECRET_KEY=sk_test_...
+   STRIPE_WEBHOOK_SECRET=whsec_...
+   ```
+
+   El `whsec_...` es el que imprime `stripe listen` (paso 3).
+
+2. Crea `.env.local` en la raíz del proyecto para que la web use el emulador:
+
+   ```
+   VITE_USE_FUNCTIONS_EMULATOR=true
+   ```
+
+3. En tres terminales:
+
+   ```bash
+   firebase emulators:start --only functions,firestore
+   stripe listen --forward-to http://127.0.0.1:5001/tripler-fb8ef/us-central1/stripeWebhook
+   npm run dev
+   ```
+
+4. Abre http://localhost:5173, agrega algo al carrito y paga con la tarjeta
+   `4242 4242 4242 4242`. El pedido aparece en http://127.0.0.1:4000/firestore
+   con `status: "pagado"`, y el pago en el Dashboard de Stripe (modo prueba).
 
 ## Precios y productos
 
