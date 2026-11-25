@@ -71,6 +71,37 @@ Cloud Functions no funcionan en el plan gratuito Spark) y tener instalado
 Para pasar a cobros reales, repite los pasos 2 y 5 con las claves `sk_live_`
 y un webhook en modo live.
 
+## Correo de confirmación
+
+Cuando el webhook marca un pedido como `pagado`, `email.js` envía al cliente
+un correo con el número de pedido, los productos, el total y la dirección.
+Se manda una sola vez por pedido; el resultado queda en el pedido
+(`emailStatus`: `enviado` o `error`, con `emailError`). Si falla, el pago no
+se ve afectado.
+
+Se envía por SMTP, así que sirve cualquier proveedor. Para empezar con el
+Gmail de la tienda:
+
+1. En la cuenta de Google de la tienda activa la verificación en dos pasos y
+   crea una contraseña de aplicación (Cuenta de Google → Seguridad →
+   Contraseñas de aplicaciones).
+2. Guárdala como secreto:
+
+   ```bash
+   firebase functions:secrets:set SMTP_PASS
+   ```
+
+3. En `functions/.env` pon `SMTP_USER` (el correo de Gmail) y `MAIL_FROM`.
+   Opcional: `MAIL_BCC` para recibir copia de cada pedido.
+4. `firebase deploy --only functions`.
+
+Gmail permite unos 500 correos al día. Con dominio propio conviene pasar a un
+proveedor como Resend o Brevo: solo cambian `SMTP_HOST`, `SMTP_USER`,
+`MAIL_FROM` y el secreto `SMTP_PASS`.
+
+Nota: el despliegue pide que exista el secreto `SMTP_PASS`. Si todavía no
+quieres correos, guarda cualquier valor y deja `SMTP_USER` vacío.
+
 ## Probar en local (sin plan Blaze y sin cobrar)
 
 Requisitos: Node 22, Java 11 o más reciente (lo pide el emulador de
@@ -81,9 +112,11 @@ Firestore), `firebase-tools` y la [Stripe CLI](https://docs.stripe.com/stripe-cl
    ```
    STRIPE_SECRET_KEY=sk_test_...
    STRIPE_WEBHOOK_SECRET=whsec_...
+   SMTP_PASS=x
    ```
 
-   El `whsec_...` es el que imprime `stripe listen` (paso 3).
+   El `whsec_...` es el que imprime `stripe listen` (paso 3). `SMTP_PASS`
+   puede ser cualquier valor si dejas `SMTP_USER` vacío (no se envían correos).
 
 2. Crea `.env.local` en la raíz del proyecto para que la web use el emulador:
 

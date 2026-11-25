@@ -5,6 +5,7 @@ import { initializeApp } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
 import { CURRENCY, PRODUCTS, SIZES, CUTS, SHIPPING_COST } from './catalog.js';
+import { SMTP_PASS, sendOrderConfirmation } from './email.js';
 
 initializeApp();
 const db = getFirestore();
@@ -277,7 +278,7 @@ async function cancelIfPending(orderId, reason) {
  * Esta es la única fuente de verdad de que un pedido se pagó.
  */
 export const stripeWebhook = onRequest(
-  { secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET] },
+  { secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, SMTP_PASS] },
   async (req, res) => {
     if (req.method !== 'POST') {
       res.status(405).send('Method Not Allowed');
@@ -313,6 +314,7 @@ export const stripeWebhook = onRequest(
             break;
           }
           await markPaid(orderId, session);
+          await sendOrderConfirmation(db, orderId);
           break;
         case 'checkout.session.async_payment_failed':
           if (orderId) await cancelIfPending(orderId, 'payment_failed');
