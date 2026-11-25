@@ -40,3 +40,9 @@
 .card button {
   display: none;
 }
+.sold-out-badge {
+  margin: 0.25rem 0 0;
+  font-weight: bold;
+  text-transform: uppercase;
+  color: var(--rojo-acento);
+}

@@ -1,0 +1,170 @@
+.admin-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+  min-height: 70vh;
+  color: var(--crema-fondo);
+}
+
+.admin-page h1 {
+  color: var(--amarillo-acento);
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.admin-page h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.2rem;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.admin-tabs button,
+.admin-primary {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--crema-fondo);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.admin-tabs button.active,
+.admin-primary {
+  background: var(--amarillo-acento);
+  color: var(--negro-texto);
+  border-color: var(--amarillo-acento);
+}
+
+.admin-primary:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.admin-product {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.admin-product.inactive {
+  opacity: 0.55;
+}
+
+.admin-product > img {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.admin-product-fields,
+.admin-new {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.admin-page input,
+.admin-page select {
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--crema-fondo);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+  font: inherit;
+}
+
+.admin-page input[type='checkbox'] {
+  width: auto;
+}
+
+.admin-page .grow {
+  flex: 1;
+  min-width: 180px;
+}
+
+.admin-page .narrow {
+  width: 80px;
+}
+
+.admin-stock {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.admin-stock input {
+  width: 64px;
+}
+
+.admin-label {
+  font-weight: bold;
+}
+
+.admin-total {
+  color: var(--amarillo-acento);
+}
+
+.admin-soldout,
+.admin-error {
+  color: var(--rojo-acento);
+  font-weight: bold;
+}
+
+.admin-status,
+.admin-hint {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.admin-hint code {
+  user-select: all;
+}
+
+.admin-preview {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.admin-order ul {
+  margin: 0.5rem 0;
+  padding-left: 1.2rem;
+}
+
+@media (max-width: 600px) {
+  .admin-product {
+    flex-direction: column;
+  }
+}
