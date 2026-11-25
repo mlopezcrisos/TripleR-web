@@ -2,6 +2,7 @@
 
 import './ProductCard.css';
 import { Link } from 'react-router-dom';
+import { totalStock } from '../data/catalogSeed';
 
 function ProductCard(props) {
   // Handle both direct props and 'product' prop object
@@ -14,6 +15,7 @@ function ProductCard(props) {
         <img src={imagen} alt={nombre} />
         <h3>{nombre}</h3>
         <p className="price">${precio}</p>
+        {product.stock && totalStock(product) === 0 && <p className="sold-out-badge">Agotado</p>}
         {/* El botón ya no está aquí */}
       </div>
     </Link>
