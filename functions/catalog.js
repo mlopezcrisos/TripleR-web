@@ -11,7 +11,7 @@ export const CURRENCY = 'mxn';
 // (colección products, que se administra desde /admin).
 export const PRODUCTS = {
   1: { nombre: 'Playera Nsqk', precio: 200 },
-  2: { nombre: "Bolsa de manta Nsqk'", precio: 150 },
+  2: { nombre: "Bolsa de manta Nsqk'", precio: 150, tipo: 'bolsa' },
   3: { nombre: 'Siento que merezco más - Latin Mafia', precio: 250 },
   4: { nombre: 'Te odio y te extraño mucho - Latin Mafia', precio: 250 },
   5: { nombre: 'Rels B', precio: 250 },
@@ -21,11 +21,13 @@ export const PRODUCTS = {
 
 export const SIZES = ['CH', 'M', 'G', 'EG', 'UNICA'];
 
-// Mismo ajuste que en ProductDetailPage.jsx (priceMod en pesos).
+// Ajustes de ProductDetailPage.jsx. priceMod se suma al precio base;
+// fixedPrice es el precio por defecto de la hoodie (400 en total) si el
+// producto en Firestore no trae precioHoodie.
 export const CUTS = {
   regular: { label: 'Regular', priceMod: 0 },
   oversize: { label: 'Oversize', priceMod: 0 },
-  hoodie: { label: 'Hoodie', priceMod: 0 },
+  hoodie: { label: 'Hoodie', fixedPrice: 400 },
 };
 
 // Envío: gratis por ahora (así lo muestra el checkout).

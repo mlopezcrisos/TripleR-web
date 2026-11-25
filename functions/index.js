@@ -64,10 +64,17 @@ async function loadProduct(id) {
   if (snap.exists) {
     const data = snap.data();
     if (data.activo === false) return null;
-    return { id: key, nombre: data.nombre, precio: Number(data.precio), stock: data.stock ?? null };
+    return {
+      id: key,
+      nombre: data.nombre,
+      precio: Number(data.precio),
+      precioHoodie: data.precioHoodie != null ? Number(data.precioHoodie) : null,
+      tipo: data.tipo ?? null,
+      stock: data.stock ?? null,
+    };
   }
   const fallback = PRODUCTS[key];
-  return fallback ? { id: key, nombre: fallback.nombre, precio: fallback.precio, stock: null } : null;
+  return fallback ? { id: key, nombre: fallback.nombre, precio: fallback.precio, precioHoodie: null, tipo: fallback.tipo ?? null, stock: null } : null;
 }
 
 // Convierte el carrito que manda el navegador en partidas con precios del
@@ -106,7 +113,13 @@ async function buildItems(rawItems) {
           `No hay suficiente stock de ${product.nombre}${size ? ` talla ${size}` : ''}.`);
       }
     }
-    const precio = product.precio + cut.priceMod;
+    if (cutId === 'hoodie' && product.tipo && product.tipo !== 'playera') {
+      throw new HttpsError('invalid-argument', `${product.nombre} no está disponible como hoodie.`);
+    }
+    // Hoodie: precio total propio (products/{id}.precioHoodie, o 400 por defecto).
+    const precio = cutId === 'hoodie'
+      ? (Number.isFinite(product.precioHoodie) ? product.precioHoodie : cut.fixedPrice)
+      : product.precio + (cut.priceMod ?? 0);
     items.push({
       productId: product.id,
       nombre: product.nombre,
